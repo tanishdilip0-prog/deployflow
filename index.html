@@ -1,0 +1,862 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    name="description"
+    content="DeployFlow — an automated delivery platform for building, testing, and deploying applications to the cloud."
+  >
+  <meta name="theme-color" content="#101f3a">
+
+  <title>DeployFlow — Ship With Confidence</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+
+<body>
+  <div class="app-shell">
+
+    <!-- =========================================
+         SIDEBAR
+    ========================================== -->
+    <aside class="sidebar" id="sidebar">
+
+      <a href="#overview" class="brand" aria-label="DeployFlow home">
+        <span class="brand-symbol">D<span>.</span></span>
+        <span class="brand-name">deployflow<span>®</span></span>
+      </a>
+
+      <div class="workspace-label">WORKSPACE</div>
+
+      <div class="workspace-switcher">
+        <div class="workspace-avatar">DF</div>
+
+        <div class="workspace-info">
+          <strong>Personal workspace</strong>
+          <span>Free developer plan</span>
+        </div>
+
+        <span class="switcher-arrow">⌄</span>
+      </div>
+
+      <nav class="main-nav" aria-label="Main navigation">
+
+        <p class="nav-heading">GENERAL</p>
+
+        <a href="#overview" class="nav-link active" data-section="overview">
+          <span class="nav-icon">◫</span>
+          <span>Overview</span>
+          <span class="nav-shortcut">01</span>
+        </a>
+
+        <a href="#pipeline" class="nav-link" data-section="pipeline">
+          <span class="nav-icon">⑂</span>
+          <span>Pipeline</span>
+        </a>
+
+        <a href="#deployments" class="nav-link" data-section="deployments">
+          <span class="nav-icon">⇧</span>
+          <span>Deployments</span>
+          <span class="nav-count" id="sidebarDeploymentCount">03</span>
+        </a>
+
+        <a href="#activity" class="nav-link" data-section="activity">
+          <span class="nav-icon">◷</span>
+          <span>Activity log</span>
+        </a>
+
+        <p class="nav-heading nav-heading-spaced">RESOURCES</p>
+
+        <a href="#infrastructure" class="nav-link" data-section="infrastructure">
+          <span class="nav-icon">▦</span>
+          <span>Infrastructure</span>
+        </a>
+
+        <a href="#integrations" class="nav-link" data-section="integrations">
+          <span class="nav-icon">⌘</span>
+          <span>Integrations</span>
+        </a>
+
+      </nav>
+
+      <div class="sidebar-spacer"></div>
+
+      <div class="sidebar-status">
+        <div class="status-indicator"></div>
+
+        <div>
+          <strong>Local preview</strong>
+          <span>Not connected to AWS</span>
+        </div>
+      </div>
+
+      <div class="sidebar-bottom">
+        <div class="user-avatar">DR</div>
+
+        <div class="user-details">
+          <strong>Developer</strong>
+          <span>Cloud engineering</span>
+        </div>
+
+        <button class="icon-button" id="settingsButton"
+          aria-label="Open settings">⚙</button>
+      </div>
+
+    </aside>
+
+
+    <!-- =========================================
+         MAIN APPLICATION
+    ========================================== -->
+    <main class="main-content" id="mainContent">
+
+      <!-- Top navigation -->
+      <header class="topbar">
+
+        <div class="breadcrumb">
+          <span>Workspace</span>
+          <span class="breadcrumb-divider">/</span>
+          <strong id="currentPageName">Overview</strong>
+        </div>
+
+        <div class="topbar-actions">
+
+          <div class="environment-badge">
+            <span class="environment-dot"></span>
+            DEMO ENVIRONMENT
+          </div>
+
+          <button
+            class="icon-button notification-button"
+            id="notificationButton"
+            aria-label="View notifications"
+          >
+            ♧
+            <span class="notification-dot"></span>
+          </button>
+
+          <button class="mobile-menu-button" id="mobileMenuButton"
+            aria-label="Toggle navigation">☰</button>
+
+        </div>
+      </header>
+
+
+      <!-- =========================================
+           OVERVIEW / HERO
+      ========================================== -->
+      <section class="page-section overview-section" id="overview">
+
+        <div class="hero-topline">
+          <span class="eyebrow">
+            <span class="eyebrow-mark"></span>
+            CLOUD DELIVERY SYSTEMS
+          </span>
+
+          <span class="date-label" id="currentDate">
+            DEVELOPER WORKSPACE
+          </span>
+        </div>
+
+        <div class="hero-grid">
+
+          <div class="hero-copy">
+
+            <h1>
+              Ship with<br>
+              <span>confidence<span class="headline-period">.</span></span>
+            </h1>
+
+            <p class="hero-description">
+              From your first commit to production.
+              One streamlined workflow for building,
+              testing and deploying applications to the cloud.
+            </p>
+
+            <div class="hero-actions">
+
+              <button class="button button-primary" id="runPipelineButton">
+                <span class="button-icon">▶</span>
+                Run demo pipeline
+              </button>
+
+              <a href="#pipeline" class="button button-secondary">
+                Explore pipeline
+                <span>↗</span>
+              </a>
+
+            </div>
+
+            <div class="hero-footnote">
+              <span class="footnote-line"></span>
+              AUTOMATION STARTS WITH ONE COMMIT
+            </div>
+
+          </div>
+
+
+          <!-- Decorative technical illustration -->
+          <div class="hero-visual" aria-label="Deployment workflow illustration">
+
+            <div class="visual-topline">
+              <span>SYSTEM / 001</span>
+              <span>DELIVERY MAP</span>
+            </div>
+
+            <div class="orbit orbit-outer"></div>
+            <div class="orbit orbit-inner"></div>
+
+            <div class="visual-cross visual-cross-horizontal"></div>
+            <div class="visual-cross visual-cross-vertical"></div>
+
+            <div class="visual-center">
+              <span class="visual-center-mark">D</span>
+              <span class="visual-center-label">DEPLOY</span>
+            </div>
+
+            <div class="visual-node visual-node-top">
+              <span class="node-point node-orange"></span>
+              <span>SOURCE</span>
+            </div>
+
+            <div class="visual-node visual-node-right">
+              <span class="node-point node-green"></span>
+              <span>VERIFY</span>
+            </div>
+
+            <div class="visual-node visual-node-bottom">
+              <span class="node-point node-blue"></span>
+              <span>BUILD</span>
+            </div>
+
+            <div class="visual-node visual-node-left">
+              <span class="node-point node-orange"></span>
+              <span>TEST</span>
+            </div>
+
+            <div class="visual-coordinates">
+              <span>12° 58' N</span>
+              <span>77° 35' E</span>
+            </div>
+
+            <div class="visual-caption">
+              <span>FIG. 01</span>
+              <span>A CONTINUOUS DELIVERY SYSTEM</span>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- Demo notice -->
+        <div class="demo-notice">
+          <span class="notice-symbol">i</span>
+
+          <p>
+            <strong>Prototype environment.</strong>
+            Metrics and pipeline results are sample data.
+            Running the demo simulates a workflow in your browser;
+            it does not contact GitHub or deploy to AWS.
+          </p>
+
+          <span class="notice-tag">DEMO MODE</span>
+        </div>
+
+      </section>
+
+
+      <!-- =========================================
+           METRICS
+      ========================================== -->
+      <section class="metrics-grid" aria-label="Deployment metrics">
+
+        <article class="metric-card metric-card-dark">
+
+          <div class="metric-top">
+            <span class="metric-label">TOTAL DEPLOYMENTS</span>
+            <span class="metric-icon">↗</span>
+          </div>
+
+          <div class="metric-value-row">
+            <h2 id="totalDeployments">24</h2>
+            <span class="metric-change">+4</span>
+          </div>
+
+          <div class="metric-bottom">
+            <span>Recorded demo runs</span>
+            <div class="mini-bars" aria-hidden="true">
+              <i style="height: 28%"></i>
+              <i style="height: 44%"></i>
+              <i style="height: 35%"></i>
+              <i style="height: 62%"></i>
+              <i style="height: 50%"></i>
+              <i style="height: 78%"></i>
+              <i style="height: 66%"></i>
+              <i style="height: 100%"></i>
+            </div>
+          </div>
+
+        </article>
+
+
+        <article class="metric-card">
+
+          <div class="metric-top">
+            <span class="metric-label">SUCCESS RATE</span>
+            <span class="metric-symbol success-symbol">↗</span>
+          </div>
+
+          <div class="metric-value-row">
+            <h2 id="successRate">96.0<span>%</span></h2>
+            <span class="metric-status success-text">STABLE</span>
+          </div>
+
+          <div class="progress-track">
+            <div class="progress-fill progress-green" style="width: 96%"></div>
+          </div>
+
+          <div class="metric-bottom">
+            <span>Illustrative demo metric</span>
+            <span>96 / 100</span>
+          </div>
+
+        </article>
+
+
+        <article class="metric-card">
+
+          <div class="metric-top">
+            <span class="metric-label">AVERAGE BUILD</span>
+            <span class="metric-symbol">◷</span>
+          </div>
+
+          <div class="metric-value-row">
+            <h2 id="averageBuild">02<span>m</span> 18<span>s</span></h2>
+          </div>
+
+          <div class="metric-bottom">
+            <span>Example build duration</span>
+            <span class="neutral-text">—</span>
+          </div>
+
+        </article>
+
+
+        <article class="metric-card">
+
+          <div class="metric-top">
+            <span class="metric-label">ACTIVE ENVIRONMENTS</span>
+            <span class="metric-symbol">⌘</span>
+          </div>
+
+          <div class="metric-value-row">
+            <h2 id="activeEnvironments">01</h2>
+            <span class="metric-status neutral-status">LOCAL</span>
+          </div>
+
+          <div class="metric-bottom">
+            <span>Browser prototype only</span>
+            <span class="neutral-text">01 / 03</span>
+          </div>
+
+        </article>
+
+      </section>
+
+
+      <!-- =========================================
+           PIPELINE
+      ========================================== -->
+      <section class="page-section content-section" id="pipeline">
+
+        <div class="section-heading">
+
+          <div>
+            <span class="section-kicker">WORKFLOW / 01</span>
+            <h2>Pipeline overview<span>.</span></h2>
+            <p>Five stages. One automated delivery process.</p>
+          </div>
+
+          <span class="section-index">01 — 05</span>
+
+        </div>
+
+
+        <div class="pipeline-panel">
+
+          <div class="panel-heading">
+            <div>
+              <span class="panel-eyebrow">DEFAULT WORKFLOW</span>
+              <h3>Application delivery</h3>
+            </div>
+
+            <span class="pipeline-status" id="pipelineStatus">
+              <span class="status-indicator"></span>
+              IDLE
+            </span>
+          </div>
+
+
+          <div class="pipeline-track" id="pipelineTrack">
+
+            <article class="pipeline-stage" data-stage="source">
+              <div class="stage-top">
+                <span class="stage-number">01</span>
+                <span class="stage-icon">⌘</span>
+              </div>
+
+              <div class="stage-line">
+                <span class="stage-line-dot"></span>
+              </div>
+
+              <h4>Source</h4>
+              <p>Repository</p>
+              <span class="stage-state" id="state-source">WAITING</span>
+            </article>
+
+
+            <article class="pipeline-stage" data-stage="test">
+              <div class="stage-top">
+                <span class="stage-number">02</span>
+                <span class="stage-icon">✓</span>
+              </div>
+
+              <div class="stage-line">
+                <span class="stage-line-dot"></span>
+              </div>
+
+              <h4>Test</h4>
+              <p>Quality checks</p>
+              <span class="stage-state" id="state-test">WAITING</span>
+            </article>
+
+
+            <article class="pipeline-stage" data-stage="auth">
+              <div class="stage-top">
+                <span class="stage-number">03</span>
+                <span class="stage-icon">⌑</span>
+              </div>
+
+              <div class="stage-line">
+                <span class="stage-line-dot"></span>
+              </div>
+
+              <h4>Authenticate</h4>
+              <p>AWS identity</p>
+              <span class="stage-state" id="state-auth">WAITING</span>
+            </article>
+
+
+            <article class="pipeline-stage" data-stage="deploy">
+              <div class="stage-top">
+                <span class="stage-number">04</span>
+                <span class="stage-icon">⇧</span>
+              </div>
+
+              <div class="stage-line">
+                <span class="stage-line-dot"></span>
+              </div>
+
+              <h4>Deploy</h4>
+              <p>Publish files</p>
+              <span class="stage-state" id="state-deploy">WAITING</span>
+            </article>
+
+
+            <article class="pipeline-stage" data-stage="verify">
+              <div class="stage-top">
+                <span class="stage-number">05</span>
+                <span class="stage-icon">◎</span>
+              </div>
+
+              <div class="stage-line">
+                <span class="stage-line-dot"></span>
+              </div>
+
+              <h4>Verify</h4>
+              <p>Website check</p>
+              <span class="stage-state" id="state-verify">WAITING</span>
+            </article>
+
+          </div>
+
+
+          <div class="pipeline-footer">
+
+            <div class="pipeline-footer-info">
+              <span class="footer-indicator"></span>
+
+              <div>
+                <strong id="pipelineFooterTitle">Ready to simulate</strong>
+                <span id="pipelineFooterText">
+                  This workflow is not connected to a real runner.
+                </span>
+              </div>
+            </div>
+
+            <button class="text-button" id="resetPipelineButton">
+              Reset workflow ↺
+            </button>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =========================================
+           DEPLOYMENTS TABLE
+      ========================================== -->
+      <section class="page-section content-section" id="deployments">
+
+        <div class="section-heading">
+
+          <div>
+            <span class="section-kicker">RELEASE HISTORY / 02</span>
+            <h2>Recent deployments<span>.</span></h2>
+            <p>A sample release history for the dashboard prototype.</p>
+          </div>
+
+          <a href="#activity" class="text-button">
+            View activity →
+          </a>
+
+        </div>
+
+
+        <div class="table-panel">
+
+          <div class="table-toolbar">
+
+            <div class="table-title">
+              <span class="table-title-mark"></span>
+              <strong>All releases</strong>
+              <span class="table-count" id="deploymentTableCount">03</span>
+            </div>
+
+            <div class="table-filters">
+
+              <label class="search-field">
+                <span>⌕</span>
+                <input
+                  type="search"
+                  id="deploymentSearch"
+                  placeholder="Search releases..."
+                  aria-label="Search deployments"
+                >
+              </label>
+
+              <select id="deploymentFilter" aria-label="Filter deployments">
+                <option value="all">All statuses</option>
+                <option value="success">Success</option>
+                <option value="failed">Failed</option>
+                <option value="running">Running</option>
+              </select>
+
+            </div>
+
+          </div>
+
+
+          <div class="table-scroll">
+            <table class="deployments-table">
+
+              <thead>
+                <tr>
+                  <th>RELEASE</th>
+                  <th>BRANCH</th>
+                  <th>COMMIT</th>
+                  <th>STATUS</th>
+                  <th>DURATION</th>
+                  <th>TRIGGERED</th>
+                </tr>
+              </thead>
+
+              <tbody id="deploymentTableBody">
+
+                <tr data-status="success">
+                  <td>
+                    <div class="release-cell">
+                      <span class="release-mark">↗</span>
+                      <div>
+                        <strong>v1.2.0</strong>
+                        <span>Production release</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td><span class="branch-label">main</span></td>
+                  <td><code>a82f1c9</code></td>
+                  <td><span class="status-pill status-success">SUCCESS</span></td>
+                  <td class="mono-cell">02m 18s</td>
+                  <td class="time-cell">Today</td>
+                </tr>
+
+                <tr data-status="success">
+                  <td>
+                    <div class="release-cell">
+                      <span class="release-mark">↗</span>
+                      <div>
+                        <strong>v1.1.4</strong>
+                        <span>Maintenance release</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td><span class="branch-label">main</span></td>
+                  <td><code>7bd92e1</code></td>
+                  <td><span class="status-pill status-success">SUCCESS</span></td>
+                  <td class="mono-cell">01m 54s</td>
+                  <td class="time-cell">Yesterday</td>
+                </tr>
+
+                <tr data-status="failed">
+                  <td>
+                    <div class="release-cell">
+                      <span class="release-mark release-mark-failed">!</span>
+                      <div>
+                        <strong>v1.1.3</strong>
+                        <span>Feature release</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td><span class="branch-label">feature/ui</span></td>
+                  <td><code>c41d0b8</code></td>
+                  <td><span class="status-pill status-failed">FAILED</span></td>
+                  <td class="mono-cell">00m 42s</td>
+                  <td class="time-cell">2 days ago</td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+
+
+          <div class="table-footer">
+            <span>Showing sample release records</span>
+            <span>DEMO DATA <span class="footer-separator">/</span> 001–003</span>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =========================================
+           ACTIVITY + TERMINAL
+      ========================================== -->
+      <section class="page-section content-section lower-grid" id="activity">
+
+        <div class="activity-panel">
+
+          <div class="panel-heading">
+            <div>
+              <span class="panel-eyebrow">EVENT STREAM / 03</span>
+              <h3>Activity log</h3>
+            </div>
+
+            <span class="live-label">
+              <span class="status-indicator"></span>
+              LOCAL
+            </span>
+          </div>
+
+          <div class="activity-list" id="activityList">
+
+            <article class="activity-item">
+              <span class="activity-marker activity-marker-green">✓</span>
+              <div class="activity-content">
+                <strong>Release published</strong>
+                <p>Sample release v1.2.0 marked successful.</p>
+                <span>DEMO EVENT · TODAY</span>
+              </div>
+            </article>
+
+            <article class="activity-item">
+              <span class="activity-marker activity-marker-orange">↻</span>
+              <div class="activity-content">
+                <strong>Build checks completed</strong>
+                <p>Example quality checks passed.</p>
+                <span>DEMO EVENT · YESTERDAY</span>
+              </div>
+            </article>
+
+            <article class="activity-item">
+              <span class="activity-marker activity-marker-neutral">⌘</span>
+              <div class="activity-content">
+                <strong>Repository connected</strong>
+                <p>GitHub connection is planned, not active.</p>
+                <span>PLACEHOLDER · NOT CONNECTED</span>
+              </div>
+            </article>
+
+          </div>
+
+          <button class="text-button activity-clear-button" id="clearActivityButton">
+            Clear local activity ↗
+          </button>
+
+        </div>
+
+
+        <div class="terminal-panel" id="infrastructure">
+
+          <div class="terminal-header">
+            <div class="terminal-title">
+              <span class="terminal-dot terminal-dot-red"></span>
+              <span class="terminal-dot terminal-dot-yellow"></span>
+              <span class="terminal-dot terminal-dot-green"></span>
+              <strong>deployflow.log</strong>
+            </div>
+
+            <span class="terminal-mode">BROWSER PREVIEW</span>
+          </div>
+
+          <div class="terminal-body" id="terminalOutput" aria-live="polite">
+
+            <p class="terminal-line">
+              <span class="terminal-muted">[00:00:01]</span>
+              <span class="terminal-green">INFO</span>
+              DeployFlow interface initialized.
+            </p>
+
+            <p class="terminal-line">
+              <span class="terminal-muted">[00:00:02]</span>
+              <span class="terminal-green">INFO</span>
+              Waiting for demo command...
+            </p>
+
+            <p class="terminal-line">
+              <span class="terminal-muted">[00:00:03]</span>
+              <span class="terminal-orange">NOTE</span>
+              No AWS session is configured.
+            </p>
+
+            <p class="terminal-line">
+              <span class="terminal-muted">[00:00:04]</span>
+              <span class="terminal-orange">NOTE</span>
+              Log entries are browser-generated.
+            </p>
+
+            <p class="terminal-prompt">
+              <span>deployflow</span> $ <span class="cursor">_</span>
+            </p>
+
+          </div>
+
+          <div class="terminal-footer">
+            <span>OUTPUT: LOCAL SIMULATION</span>
+            <span id="terminalLineCount">04 LINES</span>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =========================================
+           INTEGRATIONS
+      ========================================== -->
+      <section class="page-section content-section" id="integrations">
+
+        <div class="section-heading">
+
+          <div>
+            <span class="section-kicker">CONNECT YOUR STACK / 04</span>
+            <h2>Built for your workflow<span>.</span></h2>
+            <p>Planned integrations for the real deployment pipeline.</p>
+          </div>
+
+        </div>
+
+
+        <div class="integration-grid">
+
+          <article class="integration-card">
+            <div class="integration-top">
+              <div class="integration-icon integration-github">GH</div>
+              <span class="integration-state">PLANNED</span>
+            </div>
+
+            <h3>GitHub</h3>
+            <p>Store source code, manage branches, and trigger CI/CD workflows.</p>
+
+            <div class="integration-bottom">
+              <span>VERSION CONTROL</span>
+              <span>↗</span>
+            </div>
+          </article>
+
+
+          <article class="integration-card">
+            <div class="integration-top">
+              <div class="integration-icon integration-actions">▶</div>
+              <span class="integration-state">PLANNED</span>
+            </div>
+
+            <h3>GitHub Actions</h3>
+            <p>Run automated checks and publish application files after a push.</p>
+
+            <div class="integration-bottom">
+              <span>CONTINUOUS DELIVERY</span>
+              <span>↗</span>
+            </div>
+          </article>
+
+
+          <article class="integration-card">
+            <div class="integration-top">
+              <div class="integration-icon integration-aws">AWS</div>
+              <span class="integration-state">PLANNED</span>
+            </div>
+
+            <h3>Amazon S3</h3>
+            <p>Host the static website and publish new versions through a pipeline.</p>
+
+            <div class="integration-bottom">
+              <span>CLOUD STORAGE</span>
+              <span>↗</span>
+            </div>
+          </article>
+
+        </div>
+
+      </section>
+
+
+      <!-- =========================================
+           FOOTER
+      ========================================== -->
+      <footer class="app-footer">
+
+        <a href="#overview" class="footer-brand">DEPLOYFLOW<span>®</span></a>
+
+        <p>Designed for developers who ship.</p>
+
+        <div class="footer-meta">
+          <span>VERSION 0.1.0</span>
+          <span>LOCAL PROTOTYPE</span>
+        </div>
+
+      </footer>
+
+    </main>
+
+  </div>
+
+
+  <!-- Notification toast -->
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+</body>
+</html>
