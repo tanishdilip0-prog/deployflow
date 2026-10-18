@@ -2,6 +2,7 @@ import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import { config } from './config.js';
+import { supabase } from './db.js';
 
 export function createApp() {
   const app = express();
@@ -17,6 +18,17 @@ export function createApp() {
       env: config.env,
       time: new Date().toISOString(),
     });
+  });
+
+  app.get('/api/health/db', async (req, res) => {
+    const { error } = await supabase
+      .from('deployments')
+      .select('id', { count: 'exact', head: true });
+    if (error) {
+      console.error('Database health check failed:', error.message);
+      return res.status(503).json({ ok: false, database: 'unavailable' });
+    }
+    res.json({ ok: true, database: 'connected' });
   });
 
   app.use('/api', (req, res) => {
