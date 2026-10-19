@@ -6,9 +6,11 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
   process.exit(1);
 }
 
-const missing = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'].filter(
-  (name) => !process.env[name]
-);
+const missing = [
+  'SUPABASE_URL',
+  'SUPABASE_SERVICE_ROLE_KEY',
+  'SUPABASE_ANON_KEY',
+].filter((name) => !process.env[name]);
 if (missing.length > 0) {
   console.error('Missing in .env: ' + missing.join(', '));
   process.exit(1);
@@ -27,4 +29,5 @@ export const config = {
   frontendOrigin: process.env.FRONTEND_ORIGIN || 'http://localhost:3001',
   supabaseUrl: process.env.SUPABASE_URL,
   supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
 };

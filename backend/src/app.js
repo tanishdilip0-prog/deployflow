@@ -3,6 +3,7 @@ import helmet from 'helmet';
 import cors from 'cors';
 import { config } from './config.js';
 import { supabase } from './db.js';
+import authRoutes from './routes/auth.js';
 
 export function createApp() {
   const app = express();
@@ -30,6 +31,8 @@ export function createApp() {
     }
     res.json({ ok: true, database: 'connected' });
   });
+
+  app.use('/api/auth', authRoutes);
 
   app.use('/api', (req, res) => {
     res.status(404).json({ ok: false, error: 'Not found' });
