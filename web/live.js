@@ -23,6 +23,7 @@
   document.addEventListener('click', function () { setOpen(false); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setOpen(false); });
 
+  L.useToken = function (t) { token = t; poll(); clearInterval(timer); timer = setInterval(poll, 3000); };
   function stop() { clearInterval(timer); timer = null; token = null; L.active = false; }
 
   function showLogin(msg) {

@@ -7,6 +7,7 @@ import { requireAuth } from './auth.js';
 import authRoutes from './routes/auth.js';
 import repositoryRoutes from './routes/repositories.js';
 import deploymentRoutes from './routes/deployments.js';
+import githubRoutes from './routes/github.js';
 
 export function createApp() {
   const app = express();
@@ -35,6 +36,10 @@ export function createApp() {
     res.json({ ok: true, database: 'connected' });
   });
 
+  app.get('/api/config', (req, res) => {
+    res.json({ ok: true, supabaseUrl: config.supabaseUrl, supabaseAnonKey: config.supabaseAnonKey });
+  });
+  app.use('/api/github', requireAuth, githubRoutes);
   app.use('/api/auth', authRoutes);
   app.use('/api/repositories', requireAuth, repositoryRoutes);
   app.use('/api/deployments', requireAuth, deploymentRoutes);
