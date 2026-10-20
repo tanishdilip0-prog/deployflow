@@ -36,6 +36,11 @@
     go.onclick = function () { login(em.value.trim(), pw.value); };
     pw.onkeydown = function (e) { if (e.key === 'Enter') go.click(); };
     box.append(em, pw, go);
+    ['google', 'github'].forEach(function (p) {
+      var o = $('button', 'Continue with ' + (p === 'google' ? 'Google' : 'GitHub'));
+      o.onclick = function () { if (window.DFAuth) window.DFAuth.oauth(p); };
+      box.appendChild(o);
+    });
     if (msg) setOpen(true);
   }
 

@@ -68,6 +68,7 @@
     repos();
   }
 
+  window.DFAuth = { oauth: function (p) { if (sb) sb.auth.signInWithOAuth({ provider: p, options: { redirectTo: location.origin + '/deployflow.html' } }); } };
   var cta = document.querySelector('#aws a.btn');
   if (cta) cta.addEventListener('click', function (e) {
     e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation(); start();
