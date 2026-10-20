@@ -8,12 +8,14 @@ import authRoutes from './routes/auth.js';
 import repositoryRoutes from './routes/repositories.js';
 import deploymentRoutes from './routes/deployments.js';
 import githubRoutes from './routes/github.js';
+import webhookRoutes from './routes/webhooks.js';
 
 export function createApp() {
   const app = express();
   app.disable('x-powered-by');
   app.use(helmet());
   app.use(cors({ origin: config.frontendOrigin }));
+  app.use('/api/webhooks', express.raw({ type: 'application/json', limit: '1mb' }), webhookRoutes);
   app.use(express.json({ limit: '100kb' }));
 
   app.get('/api/health', (req, res) => {
