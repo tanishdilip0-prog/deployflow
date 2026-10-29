@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { supabase } from '../db.js';
 import { fail, isUuid, pageParams, serverError } from '../util.js';
+import { parseDestination } from '../aws.js';
 
 const router = Router();
 const NAME = /^[A-Za-z0-9_.-]{1,100}\/[A-Za-z0-9_.-]{1,100}$/;
@@ -15,7 +16,39 @@ router.get('/', async (req, res) => {
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
   if (error) return serverError(res, 'list repositories', error);
-  res.json({ ok: true, data, total: count, limit, offset });
+
+  const repoIds = (data || []).map((r) => r.id);
+  let enrichedData = data || [];
+
+  if (repoIds.length > 0) {
+    // Fetch project configurations
+    const { data: configs } = await supabase
+      .from('deployment_configurations')
+      .select('*')
+      .in('repository_id', repoIds);
+
+    const configMap = new Map((configs || []).map((c) => [c.repository_id, c]));
+
+    // Fetch latest deployment per repository
+    const { data: latestDeps } = await supabase
+      .from('deployments')
+      .select('id, repository_id, status, commit_sha, commit_message, branch, deployment_url, created_at, completed_at')
+      .in('repository_id', repoIds)
+      .order('created_at', { ascending: false });
+
+    const depMap = new Map();
+    for (const dep of (latestDeps || [])) {
+      if (!depMap.has(dep.repository_id)) depMap.set(dep.repository_id, dep);
+    }
+
+    enrichedData = data.map((r) => ({
+      ...r,
+      config: configMap.get(r.id) || null,
+      latest_deployment: depMap.get(r.id) || null
+    }));
+  }
+
+  res.json({ ok: true, data: enrichedData, total: count, limit, offset });
 });
 
 router.post('/', async (req, res) => {
@@ -94,28 +127,44 @@ router.patch('/:id/config', async (req, res) => {
   const updates = { updated_at: new Date().toISOString() };
   const DISALLOWED_CHARS = /[;&|`$<>\n\r\0]/;
 
-  // Validate s3_bucket – AWS S3 bucket naming standard
+  // Validate s3_bucket – allows dedicated bucket or bucket with prefix (e.g. "bucket/prefix")
   if (s3_bucket !== undefined) {
     if (s3_bucket === null || (typeof s3_bucket === 'string' && s3_bucket.trim().length === 0)) {
       updates.s3_bucket = null;
     } else if (typeof s3_bucket === 'string') {
-      const bucket = s3_bucket.trim();
-      const S3_BUCKET_REGEX = /^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/;
-      if (
-        bucket.length < 3 ||
-        bucket.length > 63 ||
-        !S3_BUCKET_REGEX.test(bucket) ||
-        bucket.includes('..') ||
-        bucket.includes('.-') ||
-        bucket.includes('-.') ||
-        /^\d+\.\d+\.\d+\.\d+$/.test(bucket)
-      ) {
-        return fail(res, 400, 's3_bucket must be a valid AWS S3 bucket name (3-63 chars, lowercase alphanumeric, hyphens, dots)');
+      const parsed = parseDestination(s3_bucket);
+      if (!parsed) {
+        return fail(res, 400, 's3_bucket must be a valid AWS S3 bucket name (e.g. "my-bucket") or bucket with prefix (e.g. "my-bucket/projects/app")');
       }
-      updates.s3_bucket = bucket;
+      const normalized = parsed.prefix ? `${parsed.bucket}/${parsed.prefix}` : parsed.bucket;
+
+      // Destination collision check: prevent two repositories under the same owner from overwriting each other
+      const { data: otherConfigs } = await supabase
+        .from('deployment_configurations')
+        .select('repository_id, s3_bucket')
+        .eq('s3_bucket', normalized)
+        .neq('repository_id', req.params.id);
+
+      if (otherConfigs && otherConfigs.length > 0) {
+        return fail(res, 409, `Destination "${normalized}" is already assigned to another repository. Use a unique S3 bucket or subfolder prefix to avoid overwriting files.`);
+      }
+
+      updates.s3_bucket = normalized;
     } else {
       return fail(res, 400, 's3_bucket must be a string or null');
     }
+  }
+
+  // Validate output_dir – relative path without directory traversal
+  if (output_dir !== undefined) {
+    if (output_dir === null || typeof output_dir !== 'string') {
+      return fail(res, 400, 'output_dir must be a string');
+    }
+    const cleanOut = output_dir.trim();
+    if (cleanOut.includes('..') || cleanOut.startsWith('/') || cleanOut.startsWith('\\')) {
+      return fail(res, 400, 'output_dir cannot contain directory traversal (..) or leading slashes');
+    }
+    updates.output_dir = cleanOut;
   }
 
   // Validate cloudfront_distribution_id – AWS CloudFront format

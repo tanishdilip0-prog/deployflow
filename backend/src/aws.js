@@ -78,21 +78,62 @@ export function getCloudFrontClient(options = {}) {
   return new CloudFrontClient(clientConfig);
 }
 
+export function parseDestination(destination) {
+  if (!destination || typeof destination !== 'string') return null;
+  const clean = destination.trim().replace(/^s3:\/\//i, '').replace(/^\/+|\/+$/g, '');
+  if (!clean) return null;
+
+  const parts = clean.split('/').map((p) => p.trim()).filter(Boolean);
+  const bucket = parts[0];
+  const prefix = parts.slice(1).join('/');
+
+  // AWS S3 bucket naming validation
+  const S3_BUCKET_REGEX = /^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/;
+  if (
+    bucket.length < 3 ||
+    bucket.length > 63 ||
+    !S3_BUCKET_REGEX.test(bucket) ||
+    bucket.includes('..') ||
+    bucket.includes('.-') ||
+    bucket.includes('-.') ||
+    /^\d+\.\d+\.\d+\.\d+$/.test(bucket)
+  ) {
+    return null;
+  }
+
+  // Prefix validation: prevent directory traversal
+  if (prefix && (prefix.includes('..') || prefix.startsWith('/') || prefix.endsWith('/'))) {
+    return null;
+  }
+
+  return {
+    bucket,
+    prefix,
+    fullKey: (relPath) => (prefix ? `${prefix}/${relPath.replace(/^\/+/, '')}` : relPath.replace(/^\/+/, ''))
+  };
+}
+
 export async function deployToS3(sourceDir, bucketName, options = {}) {
   const logFn = options.onLog || (() => {});
   const s3 = options.s3Client || getS3Client({ region: options.region });
   const region = options.region || config.awsRegion || 'us-east-1';
+  const rawPrefix = options.prefix || '';
+  const prefix = typeof rawPrefix === 'string' ? rawPrefix.replace(/^\/+|\/+$/g, '') : '';
 
   const files = await getFilesRecursively(sourceDir);
   if (files.length === 0) {
     throw new Error(`No files found to deploy in output directory: ${sourceDir}`);
   }
 
-  await logFn(`Found ${files.length} build asset(s) to upload to s3://${bucketName}...`);
+  const destinationLabel = prefix ? `s3://${bucketName}/${prefix}` : `s3://${bucketName}`;
+  await logFn(`Found ${files.length} build asset(s) to upload to ${destinationLabel}...`);
 
   let uploadedCount = 0;
+  const uploadedKeys = [];
+
   for (const filePath of files) {
     const relativeKey = path.relative(sourceDir, filePath).split(path.sep).join('/');
+    const destinationKey = prefix ? `${prefix}/${relativeKey}` : relativeKey;
     const ext = path.extname(filePath).toLowerCase();
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';
     const body = await fs.readFile(filePath);
@@ -106,7 +147,7 @@ export async function deployToS3(sourceDir, bucketName, options = {}) {
 
     const command = new PutObjectCommand({
       Bucket: bucketName,
-      Key: relativeKey,
+      Key: destinationKey,
       Body: body,
       ContentType: contentType,
       CacheControl: cacheControl
@@ -114,19 +155,24 @@ export async function deployToS3(sourceDir, bucketName, options = {}) {
 
     await s3.send(command);
     uploadedCount++;
+    uploadedKeys.push(destinationKey);
   }
 
   const websiteEndpoint = region === 'us-east-1'
     ? `http://${bucketName}.s3-website-us-east-1.amazonaws.com/`
     : `http://${bucketName}.s3-website.${region}.amazonaws.com/`;
-  const s3Url = `https://${bucketName}.s3.${region}.amazonaws.com/index.html`;
+  const s3Url = prefix
+    ? `https://${bucketName}.s3.${region}.amazonaws.com/${prefix}/index.html`
+    : `https://${bucketName}.s3.${region}.amazonaws.com/index.html`;
 
   return {
     success: true,
     uploadedCount,
+    uploadedKeys,
     bucket: bucketName,
+    prefix,
     region,
-    websiteUrl: websiteEndpoint,
+    websiteUrl: prefix ? `${websiteEndpoint}${prefix}/` : websiteEndpoint,
     s3Url
   };
 }
@@ -158,6 +204,67 @@ export async function invalidateCloudFront(distributionId, paths = ['/*'], optio
     await logFn(`CloudFront invalidation note: ${err.message}. S3 deployment remains active.`, 'warn');
     return { success: false, warning: err.message };
   }
+}
+
+export async function getDistributionOrigins(distributionId, options = {}) {
+  if (!distributionId) return [];
+  const cf = options.cfClient || getCloudFrontClient();
+  try {
+    const cmd = new GetDistributionCommand({ Id: distributionId });
+    const res = await cf.send(cmd);
+    const origins = res.Distribution?.DistributionConfig?.Origins?.Items || [];
+    return origins.map((o) => ({
+      id: o.Id,
+      domainName: (o.DomainName || '').toLowerCase(),
+      originPath: (o.OriginPath || '').replace(/^\/+|\/+$/g, '')
+    }));
+  } catch (err) {
+    return null;
+  }
+}
+
+export async function validateCloudFrontRouting(distributionId, targetBucket, prefix = '', options = {}) {
+  if (!distributionId || !targetBucket) {
+    return { valid: true, skipped: true };
+  }
+  const logFn = options.onLog || (() => {});
+  const origins = await getDistributionOrigins(distributionId, options);
+
+  if (origins === null) {
+    // Read permission denied or non-fatal inspection issue
+    return { valid: true, unverified: true };
+  }
+
+  if (origins.length === 0) {
+    return {
+      valid: false,
+      reason: `Distribution ${distributionId} has no origins configured.`
+    };
+  }
+
+  const cleanBucket = targetBucket.toLowerCase();
+  const matchingOrigin = origins.find((o) => o.domainName.includes(cleanBucket));
+
+  if (!matchingOrigin) {
+    const configuredOrigins = origins.map((o) => o.domainName).join(', ');
+    const reason = `CloudFront distribution ${distributionId} origins (${configuredOrigins}) do not match target S3 bucket "${cleanBucket}". Serving from this distribution would serve another project's files.`;
+    await logFn(reason, 'warn');
+    return {
+      valid: false,
+      reason,
+      configuredOrigins: origins
+    };
+  }
+
+  // If prefix is specified, check if origin path or routing covers it
+  if (prefix && matchingOrigin.originPath && matchingOrigin.originPath !== prefix) {
+    await logFn(`Note: Distribution origin path "${matchingOrigin.originPath}" differs from project prefix "${prefix}". Verify path patterns.`, 'info');
+  }
+
+  return {
+    valid: true,
+    matchingOrigin
+  };
 }
 
 export async function getCloudFrontDomain(distributionId, options = {}) {

@@ -5,7 +5,14 @@ import os from 'node:os';
 import { spawn } from 'node:child_process';
 import { supabase } from './db.js';
 import { config } from './config.js';
-import { deployToS3, invalidateCloudFront, verifyDeploymentUrl, getCloudFrontDomain } from './aws.js';
+import {
+  deployToS3,
+  invalidateCloudFront,
+  verifyDeploymentUrl,
+  getCloudFrontDomain,
+  parseDestination,
+  validateCloudFrontRouting
+} from './aws.js';
 
 let isRunning = false;
 let pollingInterval = null;
@@ -366,26 +373,56 @@ async function processDeployment(deployment) {
     }
 
     let deploymentUrl;
-    const targetBucket = cfg.s3_bucket || config.defaultS3Bucket;
+    let targetBucket = null;
+    let targetPrefix = '';
+
+    if (cfg.s3_bucket && typeof cfg.s3_bucket === 'string' && cfg.s3_bucket.trim()) {
+      const parsed = parseDestination(cfg.s3_bucket);
+      if (parsed) {
+        targetBucket = parsed.bucket;
+        targetPrefix = parsed.prefix;
+      }
+    } else if (repo.full_name === 'tanishdilip0-prog/deployflow') {
+      targetBucket = config.defaultS3Bucket;
+    }
 
     if (targetBucket) {
-      await addLog(depId, 'deploy', 'info', `Deploying build artifacts from ${path.basename(sourceOutput)} to AWS S3 bucket: ${targetBucket}...`);
+      const destLabel = targetPrefix ? `s3://${targetBucket}/${targetPrefix}` : `s3://${targetBucket}`;
+      await addLog(depId, 'deploy', 'info', `Deploying build artifacts from ${path.basename(sourceOutput)} to isolated destination: ${destLabel}...`);
       try {
         const s3Result = await deployToS3(sourceOutput, targetBucket, {
+          prefix: targetPrefix,
           onLog: (msg, lvl) => addLog(depId, 'deploy', lvl || 'info', msg)
         });
-        await addLog(depId, 'deploy', 'info', `Successfully uploaded ${s3Result.uploadedCount} file(s) to s3://${targetBucket}`);
+        await addLog(depId, 'deploy', 'info', `Successfully uploaded ${s3Result.uploadedCount} file(s) to ${destLabel}`);
 
-        const targetDistId = cfg.cloudfront_distribution_id || config.defaultCloudFrontDistributionId;
+        let targetDistId = cfg.cloudfront_distribution_id || null;
+        if (!targetDistId && repo.full_name === 'tanishdilip0-prog/deployflow') {
+          targetDistId = config.defaultCloudFrontDistributionId;
+        }
+
         if (targetDistId) {
-          await invalidateCloudFront(targetDistId, ['/*'], {
+          // Validate CloudFront origin routing to prevent cross-project mixing
+          const routingCheck = await validateCloudFrontRouting(targetDistId, targetBucket, targetPrefix, {
             onLog: (msg, lvl) => addLog(depId, 'deploy', lvl || 'info', msg)
           });
+
+          if (!routingCheck.valid) {
+            await addLog(depId, 'deploy', 'warn', `CloudFront routing check: ${routingCheck.reason}`);
+          }
+
+          const invalidationPaths = targetPrefix ? [`/${targetPrefix}/*`, `/${targetPrefix}`] : ['/*'];
+          await invalidateCloudFront(targetDistId, invalidationPaths, {
+            onLog: (msg, lvl) => addLog(depId, 'deploy', lvl || 'info', msg)
+          });
+
           const cfDomain = await getCloudFrontDomain(targetDistId, {
             onLog: (msg, lvl) => addLog(depId, 'deploy', lvl || 'info', msg)
           });
           if (cfDomain) {
-            deploymentUrl = `https://${cfDomain}/`;
+            deploymentUrl = targetPrefix
+              ? `https://${cfDomain}/${targetPrefix}/index.html`
+              : `https://${cfDomain}/index.html`;
           } else {
             deploymentUrl = s3Result.websiteUrl;
             await addLog(depId, 'deploy', 'warn', `CloudFront domain lookup failed; falling back to S3 endpoint: ${deploymentUrl}`);
@@ -394,7 +431,7 @@ async function processDeployment(deployment) {
           deploymentUrl = s3Result.websiteUrl;
         }
 
-        await addLog(depId, 'deploy', 'info', `Deployment published to AWS target: ${deploymentUrl}`);
+        await addLog(depId, 'deploy', 'info', `Deployment published to target: ${deploymentUrl}`);
         await updateStage(depId, 'deploy', 'success', 0, Date.now() - stage5Start);
       } catch (deployErr) {
         await addLog(depId, 'deploy', 'error', `AWS S3 deployment failed: ${deployErr.message}`);
@@ -407,14 +444,15 @@ async function processDeployment(deployment) {
         return;
       }
     } else {
-      const targetDeployDir = path.join(DEPLOYED_ROOT, depId);
+      // Isolated local preview per repository and deployment
+      const targetDeployDir = path.join(DEPLOYED_ROOT, repo.id || deployment.repository_id, depId);
       await fs.mkdir(targetDeployDir, { recursive: true });
-      await addLog(depId, 'deploy', 'info', `No AWS S3 bucket configured for repository; publishing artifacts to local target...`);
+      await addLog(depId, 'deploy', 'info', `No AWS S3 bucket configured for repository; publishing artifacts to isolated local target...`);
       await fs.cp(sourceOutput, targetDeployDir, {
         recursive: true,
         filter: (src) => !src.includes('node_modules') && !src.includes('.git')
       });
-      deploymentUrl = `http://localhost:${config.port}/deployed/${depId}/index.html`;
+      deploymentUrl = `http://localhost:${config.port}/deployed/${repo.id || deployment.repository_id}/${depId}/index.html`;
       await addLog(depId, 'deploy', 'info', `Artifacts published to local preview: ${deploymentUrl}`);
       await updateStage(depId, 'deploy', 'success', 0, Date.now() - stage5Start);
     }
@@ -544,11 +582,28 @@ export async function processQueue() {
       }
 
       if (queue && queue.length > 0) {
+        const nextJob = queue[0];
+
+        // Concurrency protection: verify no active deployment for the same repository is running
+        const { data: activeForRepo } = await supabase
+          .from('deployments')
+          .select('id')
+          .eq('repository_id', nextJob.repository_id)
+          .in('status', ['cloning', 'installing', 'testing', 'building', 'deploying'])
+          .limit(1);
+
+        if (activeForRepo && activeForRepo.length > 0) {
+          // Another deployment for this repository is currently in progress.
+          // Defer this deployment until current active run finishes to prevent workspace corruption.
+          hasMore = false;
+          break;
+        }
+
         // Atomically claim the deployment to prevent duplicate execution across workers/intervals
         const { data: claimed, error: claimErr } = await supabase
           .from('deployments')
           .update({ status: 'cloning', started_at: new Date().toISOString() })
-          .eq('id', queue[0].id)
+          .eq('id', nextJob.id)
           .eq('status', 'queued')
           .select('*')
           .maybeSingle();
