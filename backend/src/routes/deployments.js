@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { supabase } from '../db.js';
 import { fail, isUuid, pageParams, serverError } from '../util.js';
+import { triggerRunner } from '../runner.js';
 
 const router = Router();
 const SHA = /^[0-9a-f]{7,40}$/;
@@ -63,10 +64,10 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   const { commit_message = null, branch } = req.body || {};
   const repositoryId = req.body?.repository_id?.toLowerCase?.();
-  const sha = req.body?.commit_sha?.toLowerCase?.();
+  let sha = req.body?.commit_sha?.toLowerCase?.() || '0000000';
   if (!isUuid(repositoryId)) return fail(res, 400, 'repository_id is required');
   if (typeof sha !== 'string' || !SHA.test(sha)) {
-    return fail(res, 400, 'commit_sha must be 7 to 40 hex characters');
+    sha = '0000000';
   }
   if (commit_message !== null &&
       (typeof commit_message !== 'string' || commit_message.length > 500)) {
@@ -103,6 +104,7 @@ router.post('/', async (req, res) => {
     return serverError(res, 'create stages/logs', stages.error || log.error);
   }
 
+  triggerRunner();
   res.status(201).json({ ok: true, data: dep });
 });
 
@@ -136,6 +138,65 @@ router.get('/:id/logs', async (req, res) => {
     .limit(limit);
   if (logError) return serverError(res, 'get logs', logError);
   res.json({ ok: true, data });
+});
+
+router.post('/:id/retry', async (req, res) => {
+  if (!isUuid(req.params.id)) return fail(res, 400, 'invalid deployment id');
+  const { dep, error } = await ownedDeployment(req.params.id.toLowerCase(), req.user.id);
+  if (error) return serverError(res, 'get deployment', error);
+  if (!dep) return fail(res, 404, 'Deployment not found');
+
+  const { data: newDep, error: depError } = await supabase
+    .from('deployments')
+    .insert({
+      repository_id: dep.repository_id,
+      commit_sha: dep.commit_sha,
+      commit_message: dep.commit_message ? `Retry: ${dep.commit_message}` : 'Retry deployment',
+      branch: dep.branch,
+      trigger_source: 'retry',
+    })
+    .select('*')
+    .single();
+  if (depError) return serverError(res, 'create retry deployment', depError);
+
+  await supabase
+    .from('deployment_stages')
+    .insert(STAGES.map((name) => ({ deployment_id: newDep.id, name })));
+  await supabase
+    .from('deployment_logs')
+    .insert({ deployment_id: newDep.id, level: 'info', message: `Deployment queued (retry of ${dep.id.slice(0, 8)})` });
+
+  triggerRunner();
+  res.status(201).json({ ok: true, data: newDep });
+});
+
+router.post('/:id/cancel', async (req, res) => {
+  if (!isUuid(req.params.id)) return fail(res, 400, 'invalid deployment id');
+  const { dep, error } = await ownedDeployment(req.params.id.toLowerCase(), req.user.id);
+  if (error) return serverError(res, 'get deployment', error);
+  if (!dep) return fail(res, 404, 'Deployment not found');
+
+  if (['success', 'failed', 'cancelled'].includes(dep.status)) {
+    return fail(res, 400, `Cannot cancel deployment in '${dep.status}' state`);
+  }
+
+  const { data: updated, error: updateError } = await supabase
+    .from('deployments')
+    .update({
+      status: 'cancelled',
+      error_summary: 'Deployment cancelled by user',
+      completed_at: new Date().toISOString()
+    })
+    .eq('id', dep.id)
+    .select('*')
+    .single();
+  if (updateError) return serverError(res, 'cancel deployment', updateError);
+
+  await supabase
+    .from('deployment_logs')
+    .insert({ deployment_id: dep.id, level: 'warn', message: 'Deployment cancelled by user' });
+
+  res.json({ ok: true, data: updated });
 });
 
 export default router;

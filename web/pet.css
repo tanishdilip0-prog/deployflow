@@ -1,0 +1,701 @@
+/* =========================================================
+   DEPLOYFLOW AI PET — PIP THE DEPLOYBOT
+   Design Language: Navy × Beige Retro Pixel Companion
+   ========================================================= */
+
+/* -------------------------------------------------------------
+   01. PET FLOATING CONTAINER
+   ------------------------------------------------------------- */
+.df-pet-container {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  width: 64px;
+  height: 64px;
+  z-index: 9990;
+  user-select: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.12s linear;
+  filter: drop-shadow(0 6px 12px rgba(16, 31, 58, 0.22));
+}
+
+.df-pet-container:focus-visible {
+  outline: 3px solid var(--orange-500, #c46e45);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+.df-pet-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* -------------------------------------------------------------
+   02. PIXEL-ART ROBOT CHARACTER (SVG & CANVAS)
+   ------------------------------------------------------------- */
+.df-pet-sprite {
+  width: 56px;
+  height: 56px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  transform-origin: center bottom;
+  transition: transform 0.15s ease-out;
+}
+
+/* Horizontal flip based on movement direction */
+.df-pet-facing-left .df-pet-sprite {
+  transform: scaleX(-1);
+}
+
+/* -------------------------------------------------------------
+   03. ANIMATION STATES (PURE CSS KEYFRAMES)
+   ------------------------------------------------------------- */
+
+/* Idle Breathing & Bobbing */
+@keyframes pet-idle-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+.df-pet-state-idle .df-pet-sprite {
+  animation: pet-idle-bob 2.4s ease-in-out infinite;
+}
+
+/* Walking */
+@keyframes pet-walk-cycle {
+  0% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-4px) rotate(4deg); }
+  50% { transform: translateY(0) rotate(0deg); }
+  75% { transform: translateY(-4px) rotate(-4deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+.df-pet-state-walking .df-pet-sprite {
+  animation: pet-walk-cycle 0.5s linear infinite;
+}
+
+/* Running */
+@keyframes pet-run-cycle {
+  0% { transform: translateY(0) rotate(2deg) skewX(-4deg); }
+  25% { transform: translateY(-7px) rotate(6deg) skewX(-4deg); }
+  50% { transform: translateY(0) rotate(2deg) skewX(-4deg); }
+  75% { transform: translateY(-7px) rotate(-6deg) skewX(-4deg); }
+  100% { transform: translateY(0) rotate(2deg) skewX(-4deg); }
+}
+.df-pet-state-running .df-pet-sprite {
+  animation: pet-run-cycle 0.28s linear infinite;
+}
+
+/* Dancing */
+@keyframes pet-dance-bounce {
+  0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+  20% { transform: translateY(-10px) rotate(-8deg) scale(1.05); }
+  40% { transform: translateY(2px) rotate(4deg) scale(0.95); }
+  60% { transform: translateY(-10px) rotate(8deg) scale(1.05); }
+  80% { transform: translateY(2px) rotate(-4deg) scale(0.95); }
+}
+.df-pet-state-dancing .df-pet-sprite {
+  animation: pet-dance-bounce 0.8s ease-in-out infinite;
+}
+
+/* Laughing */
+@keyframes pet-laugh-wiggle {
+  0%, 100% { transform: translateY(0) scale(1); }
+  25% { transform: translateY(-5px) scale(1.08, 0.94); }
+  50% { transform: translateY(-2px) scale(0.96, 1.04); }
+  75% { transform: translateY(-6px) scale(1.08, 0.94); }
+}
+.df-pet-state-laughing .df-pet-sprite {
+  animation: pet-laugh-wiggle 0.35s ease-in-out infinite;
+}
+
+/* Happy */
+@keyframes pet-happy-jump {
+  0%, 100% { transform: translateY(0) scale(1); }
+  30% { transform: translateY(-14px) scale(1.1, 0.95); }
+  50% { transform: translateY(0) scale(0.9, 1.1); }
+  70% { transform: translateY(-6px) scale(1.05, 0.98); }
+}
+.df-pet-state-happy .df-pet-sprite {
+  animation: pet-happy-jump 0.9s ease-out;
+}
+
+/* Thinking (pulsing antenna & slight tilt) */
+@keyframes pet-think-pulse {
+  0%, 100% { transform: translateY(-2px) rotate(-3deg); }
+  50% { transform: translateY(0) rotate(3deg); }
+}
+.df-pet-state-thinking .df-pet-sprite {
+  animation: pet-think-pulse 1.8s ease-in-out infinite;
+}
+
+/* Sleeping (gentle curl and deep breathing) */
+@keyframes pet-sleep-breath {
+  0%, 100% { transform: translateY(2px) scale(0.98, 0.96); opacity: 0.92; }
+  50% { transform: translateY(0) scale(1, 1); opacity: 1; }
+}
+.df-pet-state-sleeping .df-pet-sprite {
+  animation: pet-sleep-breath 3.2s ease-in-out infinite;
+}
+
+/* Confused */
+@keyframes pet-confused-tilt {
+  0%, 100% { transform: rotate(10deg); }
+  50% { transform: rotate(-8deg); }
+}
+.df-pet-state-confused .df-pet-sprite {
+  animation: pet-confused-tilt 1.2s ease-in-out infinite;
+}
+
+/* Error Reaction */
+@keyframes pet-error-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px) rotate(-4deg); }
+  40%, 80% { transform: translateX(5px) rotate(4deg); }
+}
+.df-pet-state-error .df-pet-sprite {
+  animation: pet-error-shake 0.4s ease-in-out 2;
+}
+
+/* Greeting Wave */
+@keyframes pet-greeting-wave {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-8px) rotate(-6deg); }
+  50% { transform: translateY(-8px) rotate(6deg); }
+  75% { transform: translateY(-4px) rotate(-4deg); }
+}
+.df-pet-state-greeting .df-pet-sprite {
+  animation: pet-greeting-wave 1s ease-in-out;
+}
+
+/* Respect Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .df-pet-sprite,
+  .df-pet-state-idle .df-pet-sprite,
+  .df-pet-state-walking .df-pet-sprite,
+  .df-pet-state-running .df-pet-sprite,
+  .df-pet-state-dancing .df-pet-sprite,
+  .df-pet-state-laughing .df-pet-sprite,
+  .df-pet-state-happy .df-pet-sprite,
+  .df-pet-state-thinking .df-pet-sprite,
+  .df-pet-state-sleeping .df-pet-sprite,
+  .df-pet-state-confused .df-pet-sprite,
+  .df-pet-state-error .df-pet-sprite,
+  .df-pet-state-greeting .df-pet-sprite {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* -------------------------------------------------------------
+   04. FLOATING SPEECH BUBBLE
+   ------------------------------------------------------------- */
+.df-pet-speech-bubble {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--paper, #fffdf8);
+  color: var(--navy-950, #101f3a);
+  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  padding: 6px 10px;
+  white-space: nowrap;
+  border: 2px solid var(--navy-950, #101f3a);
+  border-radius: 8px;
+  box-shadow: 2px 2px 0 var(--navy-950, #101f3a);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 9992;
+}
+
+.df-pet-speech-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--navy-950, #101f3a) transparent transparent transparent;
+}
+
+.df-pet-speech-bubble.df-bubble-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-2px);
+}
+
+/* Sleep Z particles */
+.df-pet-z-particles {
+  position: absolute;
+  top: -12px;
+  right: -4px;
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--navy-700, #344966);
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes z-float {
+  0% { opacity: 0; transform: translateY(0) scale(0.7); }
+  50% { opacity: 1; transform: translateY(-8px) scale(1); }
+  100% { opacity: 0; transform: translateY(-16px) scale(1.2); }
+}
+
+.df-pet-state-sleeping .df-pet-z-particles {
+  animation: z-float 2s linear infinite;
+}
+
+/* -------------------------------------------------------------
+   05. COMPACT ACTION MENU
+   ------------------------------------------------------------- */
+.df-pet-quick-menu {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  right: 0;
+  background: var(--paper, #fffdf8);
+  border: 2px solid var(--navy-950, #101f3a);
+  border-radius: 10px;
+  box-shadow: 3px 3px 0 var(--navy-950, #101f3a);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(6px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 9993;
+}
+
+.df-pet-quick-menu.df-menu-open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.df-pet-menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  color: var(--navy-900, #142542);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.df-pet-menu-btn:hover,
+.df-pet-menu-btn:focus-visible {
+  background: var(--beige-200, #e8ddc8);
+  color: var(--navy-950, #101f3a);
+  outline: none;
+}
+
+.df-pet-menu-btn.df-menu-active {
+  background: var(--navy-950, #101f3a);
+  color: var(--beige-100, #f7f2e9);
+}
+
+.df-pet-menu-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* -------------------------------------------------------------
+   06. AI CHAT ASSISTANT PANEL
+   ------------------------------------------------------------- */
+.df-chat-panel {
+  position: fixed;
+  bottom: 96px;
+  right: 28px;
+  width: 410px;
+  max-width: calc(100vw - 32px);
+  height: 580px;
+  max-height: calc(100vh - 120px);
+  background: var(--paper, #fffdf8);
+  border: 2px solid var(--navy-950, #101f3a);
+  border-radius: 14px;
+  box-shadow: 6px 6px 0 var(--navy-950, #101f3a), 0 16px 36px rgba(16, 31, 58, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 9995;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(16px) scale(0.97);
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.df-chat-panel.df-chat-open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+/* Chat Header */
+.df-chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--beige-150, #f1e8d9);
+  border-bottom: 2px solid var(--navy-950, #101f3a);
+}
+
+.df-chat-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.df-chat-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--navy-950, #101f3a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--navy-900, #142542);
+}
+
+.df-chat-avatar svg {
+  width: 26px;
+  height: 26px;
+}
+
+.df-chat-title-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.df-chat-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy-950, #101f3a);
+  letter-spacing: -0.01em;
+}
+
+.df-chat-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  line-height: 1.4;
+}
+
+.df-status-online {
+  background: var(--green-100, #e1ece1);
+  color: var(--green-500, #5b856b);
+  border: 1px solid rgba(91, 133, 107, 0.4);
+}
+
+.df-status-offline {
+  background: var(--orange-100, #f6e4d8);
+  color: var(--orange-600, #a95734);
+  border: 1px solid rgba(169, 87, 52, 0.4);
+}
+
+.df-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.df-chat-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.df-chat-header-btn {
+  background: transparent;
+  border: none;
+  color: var(--navy-700, #344966);
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  line-height: 1;
+  transition: background 0.12s, color 0.12s;
+}
+
+.df-chat-header-btn:hover,
+.df-chat-header-btn:focus-visible {
+  background: var(--beige-200, #e8ddc8);
+  color: var(--navy-950, #101f3a);
+  outline: none;
+}
+
+/* Quick Action Chips */
+.df-chat-quick-actions {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--beige-100, #f7f2e9);
+  border-bottom: 1px solid var(--beige-300, #d9cbb4);
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+.df-chat-quick-actions::-webkit-scrollbar {
+  display: none;
+}
+
+.df-chip-btn {
+  background: var(--paper, #fffdf8);
+  border: 1px solid var(--navy-950, #101f3a);
+  color: var(--navy-900, #142542);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  flex-shrink: 0;
+}
+
+.df-chip-btn:hover,
+.df-chip-btn:focus-visible {
+  background: var(--navy-950, #101f3a);
+  color: var(--beige-100, #f7f2e9);
+  outline: none;
+}
+
+/* Conversation Scroll Area */
+.df-chat-messages {
+  flex: 1;
+  padding: 14px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--paper, #fffdf8);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Chat Messages */
+.df-msg-row {
+  display: flex;
+  flex-direction: column;
+  max-width: 88%;
+}
+
+.df-msg-user {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.df-msg-assistant {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.df-msg-bubble {
+  padding: 9px 13px;
+  border-radius: 10px;
+  word-break: break-word;
+}
+
+.df-msg-user .df-msg-bubble {
+  background: var(--navy-950, #101f3a);
+  color: var(--beige-100, #f7f2e9);
+  border-bottom-right-radius: 2px;
+}
+
+.df-msg-assistant .df-msg-bubble {
+  background: var(--beige-100, #f7f2e9);
+  color: var(--navy-950, #101f3a);
+  border: 1px solid var(--beige-300, #d9cbb4);
+  border-bottom-left-radius: 2px;
+}
+
+.df-msg-bubble p {
+  margin: 0 0 6px 0;
+}
+.df-msg-bubble p:last-child {
+  margin-bottom: 0;
+}
+
+.df-msg-bubble pre,
+.df-msg-bubble code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  background: var(--beige-200, #e8ddc8);
+  border-radius: 4px;
+  padding: 2px 4px;
+  color: var(--navy-950, #101f3a);
+}
+
+.df-msg-bubble pre {
+  padding: 8px;
+  overflow-x: auto;
+  margin: 6px 0;
+  border: 1px solid var(--beige-400, #b8ac97);
+}
+
+.df-msg-bubble pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.df-msg-meta {
+  font-size: 10px;
+  color: var(--navy-500, #758196);
+  margin-top: 3px;
+  padding: 0 4px;
+}
+
+/* Setup & Offline Notice Card */
+.df-offline-card {
+  background: var(--beige-150, #f1e8d9);
+  border: 1px dashed var(--orange-500, #c46e45);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0;
+  color: var(--navy-950, #101f3a);
+  font-size: 12px;
+}
+
+.df-offline-card strong {
+  color: var(--orange-600, #a95734);
+  display: block;
+  margin-bottom: 6px;
+}
+
+.df-code-snippet {
+  background: var(--navy-950, #101f3a);
+  color: var(--beige-100, #f7f2e9);
+  font-family: monospace;
+  font-size: 11px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  display: block;
+  margin: 6px 0;
+}
+
+.df-retry-btn {
+  background: var(--navy-950, #101f3a);
+  color: var(--beige-100, #f7f2e9);
+  border: none;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 6px;
+  transition: background 0.12s;
+}
+
+.df-retry-btn:hover {
+  background: var(--orange-600, #a95734);
+}
+
+/* Chat Input Bar */
+.df-chat-input-bar {
+  padding: 10px 12px;
+  background: var(--beige-100, #f7f2e9);
+  border-top: 2px solid var(--navy-950, #101f3a);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.df-chat-input {
+  flex: 1;
+  background: var(--paper, #fffdf8);
+  border: 1px solid var(--navy-950, #101f3a);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--navy-950, #101f3a);
+  resize: none;
+  min-height: 36px;
+  max-height: 80px;
+  line-height: 1.4;
+  outline: none;
+}
+
+.df-chat-input:focus {
+  border-color: var(--orange-500, #c46e45);
+  box-shadow: 0 0 0 2px var(--orange-100, #f6e4d8);
+}
+
+.df-chat-send-btn {
+  background: var(--orange-500, #c46e45);
+  color: var(--white, #ffffff);
+  border: 2px solid var(--navy-950, #101f3a);
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 var(--navy-950, #101f3a);
+  transition: transform 0.1s, background 0.1s;
+  flex-shrink: 0;
+}
+
+.df-chat-send-btn:hover:not(:disabled) {
+  background: var(--orange-600, #a95734);
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--navy-950, #101f3a);
+}
+
+.df-chat-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* -------------------------------------------------------------
+   07. MOBILE ADJUSTMENTS
+   ------------------------------------------------------------- */
+@media (max-width: 600px) {
+  .df-pet-container {
+    bottom: 16px;
+    right: 16px;
+  }
+
+  .df-chat-panel {
+    bottom: 84px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    height: 70vh;
+    box-shadow: 4px 4px 0 var(--navy-950, #101f3a);
+  }
+}

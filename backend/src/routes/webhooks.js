@@ -2,6 +2,7 @@ import { Router } from 'express';
 import crypto from 'node:crypto';
 import { supabase } from '../db.js';
 import { config } from '../config.js';
+import { triggerRunner } from '../runner.js';
 
 const router = Router();
 const STAGES = ['checkout', 'install', 'test', 'build', 'deploy', 'verify'];
@@ -71,6 +72,7 @@ router.post('/github', async (req, res) => {
         .insert({ deployment_id: dep.id, level: 'info', message: 'Deployment queued by GitHub push' });
       if (lg.error) throw lg.error;
     }
+    triggerRunner();
   } catch (e) {
     console.error('webhook failed:', e.message);
     await supabase.from('webhook_deliveries').delete().eq('delivery_id', delivery);

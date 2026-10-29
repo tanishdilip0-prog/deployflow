@@ -20,7 +20,11 @@
   >
 
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="web/pet.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="web/three.min.js"></script>
   <script src="script.js" defer></script>
+  <script src="web/pet.js" defer></script>
 </head>
 
 <body>
@@ -56,7 +60,6 @@
         <a href="#overview" class="nav-link active" data-section="overview">
           <span class="nav-icon">◫</span>
           <span>Overview</span>
-          <span class="nav-shortcut">01</span>
         </a>
 
         <a href="#pipeline" class="nav-link" data-section="pipeline">
@@ -101,11 +104,11 @@
       </div>
 
       <div class="sidebar-bottom">
-        <div class="user-avatar">DR</div>
+        <div class="user-avatar" id="sidebarAvatar">DF</div>
 
         <div class="user-details">
-          <strong>Developer</strong>
-          <span>Cloud engineering</span>
+          <strong id="sidebarUserName">Developer</strong>
+          <span id="sidebarUserEmail">Connecting...</span>
         </div>
 
         <button class="icon-button" id="settingsButton"
@@ -127,14 +130,21 @@
           <span>Workspace</span>
           <span class="breadcrumb-divider">/</span>
           <strong id="currentPageName">Overview</strong>
+          <div class="environment-badge" id="envBadge" style="margin-left: 8px;">
+            <span class="environment-dot"></span>
+            <span id="envBadgeText">LIVE WORKSPACE</span>
+          </div>
         </div>
 
         <div class="topbar-actions">
 
-          <div class="environment-badge">
-            <span class="environment-dot"></span>
-            DEMO ENVIRONMENT
-          </div>
+          <a href="web/deployflow.html" class="button button-secondary" id="showcaseLink" style="padding: 7px 14px; font-size: 11px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+            3D showcase <span>↗</span>
+          </a>
+
+          <button class="button button-secondary" id="authButton" style="padding: 7px 14px; font-size: 11px;">
+            Sign in
+          </button>
 
           <button
             class="icon-button notification-button"
@@ -187,7 +197,11 @@
 
               <button class="button button-primary" id="runPipelineButton">
                 <span class="button-icon">▶</span>
-                Run demo pipeline
+                Trigger deployment
+              </button>
+
+              <button class="button button-secondary" id="heroConnectRepoButton" style="display: inline-flex; align-items: center; gap: 4px;">
+                + Connect repository
               </button>
 
               <a href="#pipeline" class="button button-secondary">
@@ -199,14 +213,15 @@
 
             <div class="hero-footnote">
               <span class="footnote-line"></span>
-              AUTOMATION STARTS WITH ONE COMMIT
+              Automation starts with one commit
             </div>
 
           </div>
 
 
-          <!-- Decorative technical illustration -->
+          <!-- Decorative technical illustration with live 3D pipeline visualization -->
           <div class="hero-visual" aria-label="Deployment workflow illustration">
+            <canvas id="heroGlCanvas" class="hero-canvas" aria-hidden="true"></canvas>
 
             <div class="visual-topline">
               <span>SYSTEM / 001</span>
@@ -251,7 +266,7 @@
 
             <div class="visual-caption">
               <span>FIG. 01</span>
-              <span>A CONTINUOUS DELIVERY SYSTEM</span>
+              <span>A continuous delivery system</span>
             </div>
 
           </div>
@@ -259,18 +274,16 @@
         </div>
 
 
-        <!-- Demo notice -->
-        <div class="demo-notice">
-          <span class="notice-symbol">i</span>
+        <!-- System notice -->
+        <div class="demo-notice" id="systemNoticeBanner">
+          <span class="notice-symbol">✓</span>
 
-          <p>
-            <strong>Prototype environment.</strong>
-            Metrics and pipeline results are sample data.
-            Running the demo simulates a workflow in your browser;
-            it does not contact GitHub or deploy to AWS.
+          <p id="systemNoticeText">
+            <strong>Connected to Supabase.</strong>
+            Pipelines execute in real-time. Live build stages, metrics, and deployment URLs are synchronized with the database.
           </p>
 
-          <span class="notice-tag">DEMO MODE</span>
+          <span class="notice-tag" id="systemNoticeTag">LIVE SYSTEM</span>
         </div>
 
       </section>
@@ -385,10 +398,10 @@
           <div>
             <span class="section-kicker">WORKFLOW / 01</span>
             <h2>Pipeline overview<span>.</span></h2>
-            <p>Five stages. One automated delivery process.</p>
+            <p>Six stages. One automated delivery process.</p>
           </div>
 
-          <span class="section-index">01 — 05</span>
+          <span class="section-index">01 — 06</span>
 
         </div>
 
@@ -410,82 +423,81 @@
 
           <div class="pipeline-track" id="pipelineTrack">
 
-            <article class="pipeline-stage" data-stage="source">
+            <article class="pipeline-stage" data-stage="checkout">
               <div class="stage-top">
                 <span class="stage-number">01</span>
                 <span class="stage-icon">⌘</span>
               </div>
-
               <div class="stage-line">
                 <span class="stage-line-dot"></span>
               </div>
-
-              <h4>Source</h4>
-              <p>Repository</p>
-              <span class="stage-state" id="state-source">WAITING</span>
+              <h4>Checkout</h4>
+              <p>Git source</p>
+              <span class="stage-state" id="state-checkout">WAITING</span>
             </article>
 
+            <article class="pipeline-stage" data-stage="install">
+              <div class="stage-top">
+                <span class="stage-number">02</span>
+                <span class="stage-icon">📦</span>
+              </div>
+              <div class="stage-line">
+                <span class="stage-line-dot"></span>
+              </div>
+              <h4>Install</h4>
+              <p>Dependencies</p>
+              <span class="stage-state" id="state-install">WAITING</span>
+            </article>
 
             <article class="pipeline-stage" data-stage="test">
               <div class="stage-top">
-                <span class="stage-number">02</span>
+                <span class="stage-number">03</span>
                 <span class="stage-icon">✓</span>
               </div>
-
               <div class="stage-line">
                 <span class="stage-line-dot"></span>
               </div>
-
               <h4>Test</h4>
               <p>Quality checks</p>
               <span class="stage-state" id="state-test">WAITING</span>
             </article>
 
-
-            <article class="pipeline-stage" data-stage="auth">
+            <article class="pipeline-stage" data-stage="build">
               <div class="stage-top">
-                <span class="stage-number">03</span>
-                <span class="stage-icon">⌑</span>
+                <span class="stage-number">04</span>
+                <span class="stage-icon">⚡</span>
               </div>
-
               <div class="stage-line">
                 <span class="stage-line-dot"></span>
               </div>
-
-              <h4>Authenticate</h4>
-              <p>AWS identity</p>
-              <span class="stage-state" id="state-auth">WAITING</span>
+              <h4>Build</h4>
+              <p>Compilation</p>
+              <span class="stage-state" id="state-build">WAITING</span>
             </article>
-
 
             <article class="pipeline-stage" data-stage="deploy">
               <div class="stage-top">
-                <span class="stage-number">04</span>
+                <span class="stage-number">05</span>
                 <span class="stage-icon">⇧</span>
               </div>
-
               <div class="stage-line">
                 <span class="stage-line-dot"></span>
               </div>
-
               <h4>Deploy</h4>
               <p>Publish files</p>
               <span class="stage-state" id="state-deploy">WAITING</span>
             </article>
 
-
             <article class="pipeline-stage" data-stage="verify">
               <div class="stage-top">
-                <span class="stage-number">05</span>
+                <span class="stage-number">06</span>
                 <span class="stage-icon">◎</span>
               </div>
-
               <div class="stage-line">
                 <span class="stage-line-dot"></span>
               </div>
-
               <h4>Verify</h4>
-              <p>Website check</p>
+              <p>Health check</p>
               <span class="stage-state" id="state-verify">WAITING</span>
             </article>
 
@@ -505,7 +517,7 @@
               </div>
             </div>
 
-            <button class="text-button" id="resetPipelineButton">
+            <button class="button button-secondary" id="resetPipelineButton" style="min-height: 34px; padding: 0 14px; font-size: var(--fs-xs);">
               Reset workflow ↺
             </button>
 
@@ -589,7 +601,6 @@
                 <tr data-status="success">
                   <td>
                     <div class="release-cell">
-                      <span class="release-mark">↗</span>
                       <div>
                         <strong>v1.2.0</strong>
                         <span>Production release</span>
@@ -606,7 +617,6 @@
                 <tr data-status="success">
                   <td>
                     <div class="release-cell">
-                      <span class="release-mark">↗</span>
                       <div>
                         <strong>v1.1.4</strong>
                         <span>Maintenance release</span>
@@ -623,7 +633,6 @@
                 <tr data-status="failed">
                   <td>
                     <div class="release-cell">
-                      <span class="release-mark release-mark-failed">!</span>
                       <div>
                         <strong>v1.1.3</strong>
                         <span>Feature release</span>
@@ -678,7 +687,7 @@
               <div class="activity-content">
                 <strong>Release published</strong>
                 <p>Sample release v1.2.0 marked successful.</p>
-                <span>DEMO EVENT · TODAY</span>
+                <span>Demo event · Today</span>
               </div>
             </article>
 
@@ -687,7 +696,7 @@
               <div class="activity-content">
                 <strong>Build checks completed</strong>
                 <p>Example quality checks passed.</p>
-                <span>DEMO EVENT · YESTERDAY</span>
+                <span>Demo event · Yesterday</span>
               </div>
             </article>
 
@@ -696,14 +705,14 @@
               <div class="activity-content">
                 <strong>Repository connected</strong>
                 <p>GitHub connection is planned, not active.</p>
-                <span>PLACEHOLDER · NOT CONNECTED</span>
+                <span>Placeholder · Not connected</span>
               </div>
             </article>
 
           </div>
 
           <button class="text-button activity-clear-button" id="clearActivityButton">
-            Clear local activity ↗
+            Clear local activity ⌫
           </button>
 
         </div>
@@ -755,8 +764,8 @@
           </div>
 
           <div class="terminal-footer">
-            <span>OUTPUT: LOCAL SIMULATION</span>
-            <span id="terminalLineCount">04 LINES</span>
+            <span>Output: Local simulation</span>
+            <span id="terminalLineCount">04 lines</span>
           </div>
 
         </div>
@@ -774,7 +783,7 @@
           <div>
             <span class="section-kicker">CONNECT YOUR STACK / 04</span>
             <h2>Built for your workflow<span>.</span></h2>
-            <p>Planned integrations for the real deployment pipeline.</p>
+            <p>Connected cloud services and delivery pipeline components.</p>
           </div>
 
         </div>
@@ -782,49 +791,65 @@
 
         <div class="integration-grid">
 
-          <article class="integration-card">
+          <article class="integration-card" id="githubIntegrationCard" style="cursor: pointer;">
             <div class="integration-top">
               <div class="integration-icon integration-github">GH</div>
-              <span class="integration-state">PLANNED</span>
+              <span class="integration-state integration-state-active" id="githubIntegrationState">ACTIVE</span>
             </div>
 
             <h3>GitHub</h3>
-            <p>Store source code, manage branches, and trigger CI/CD workflows.</p>
+            <p>Connect repositories, track branches, and trigger automated deployment runs via push webhooks.</p>
 
             <div class="integration-bottom">
-              <span>VERSION CONTROL</span>
+              <span id="githubIntegrationAction">Connected repositories</span>
               <span>↗</span>
             </div>
           </article>
 
 
-          <article class="integration-card">
+          <article class="integration-card" id="pipelineIntegrationCard" style="cursor: pointer;">
             <div class="integration-top">
-              <div class="integration-icon integration-actions">▶</div>
-              <span class="integration-state">PLANNED</span>
+              <div class="integration-icon integration-pipeline">DF</div>
+              <span class="integration-state integration-state-active">ACTIVE</span>
             </div>
 
-            <h3>GitHub Actions</h3>
-            <p>Run automated checks and publish application files after a push.</p>
+            <h3>DeployFlow Pipeline</h3>
+            <p>Autonomous six-stage runner: checkout, install, test, build, deploy, and verify with live logs.</p>
 
             <div class="integration-bottom">
-              <span>CONTINUOUS DELIVERY</span>
+              <span>6-stage runner engine</span>
               <span>↗</span>
             </div>
           </article>
 
 
-          <article class="integration-card">
+          <article class="integration-card" id="s3IntegrationCard" style="cursor: pointer;">
             <div class="integration-top">
-              <div class="integration-icon integration-aws">AWS</div>
-              <span class="integration-state">PLANNED</span>
+              <div class="integration-icon integration-aws">S3</div>
+              <span class="integration-state integration-state-active" id="s3IntegrationState">ACTIVE</span>
             </div>
 
             <h3>Amazon S3</h3>
-            <p>Host the static website and publish new versions through a pipeline.</p>
+            <p>Cloud object storage for versioned build artifacts with automated MIME typing and cache-control headers.</p>
 
             <div class="integration-bottom">
-              <span>CLOUD STORAGE</span>
+              <span id="s3IntegrationDetail">Bucket: deployflow-automation</span>
+              <span>↗</span>
+            </div>
+          </article>
+
+
+          <article class="integration-card" id="cloudfrontIntegrationCard" style="cursor: pointer;">
+            <div class="integration-top">
+              <div class="integration-icon integration-cloudfront">CF</div>
+              <span class="integration-state integration-state-active" id="cloudfrontIntegrationState">ACTIVE</span>
+            </div>
+
+            <h3>Amazon CloudFront</h3>
+            <p>Global CDN edge delivery, HTTPS termination, and automated cache invalidation on deployment.</p>
+
+            <div class="integration-bottom">
+              <span id="cloudfrontIntegrationDetail">Distribution: E4YPXGKH22DTH</span>
               <span>↗</span>
             </div>
           </article>
@@ -844,8 +869,8 @@
         <p>Designed for developers who ship.</p>
 
         <div class="footer-meta">
-          <span>VERSION 0.1.0</span>
-          <span>LOCAL PROTOTYPE</span>
+          <span>Version 0.1.0</span>
+          <span>Local prototype</span>
         </div>
 
       </footer>

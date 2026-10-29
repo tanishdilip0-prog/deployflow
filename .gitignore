@@ -1,2 +1,7 @@
 .env
 node_modules
+deployed/
+.DS_Store
+
+# Local AWS credentials
+deployflow-deployer_accessKeys.csv

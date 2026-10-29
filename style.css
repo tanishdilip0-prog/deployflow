@@ -39,6 +39,32 @@
   --red-500: #b85c50;
   --red-100: #f5e3df;
 
+  /* Semantic text colours — controls the entire palette */
+  --text-primary:   var(--navy-950);
+  --text-secondary: var(--navy-600);
+  --text-muted:     var(--navy-500);
+  --text-link:      var(--orange-600);
+  --text-success:   var(--green-500);
+  --text-warning:   var(--orange-600);
+  --text-error:     var(--red-500);
+  --text-info:      var(--navy-700);
+
+  /* Shared type scale — Issues 1-3, 6, 9-12 */
+  --fs-xs:   11px;   /* badges, table annotations, timestamps   */
+  --fs-sm:   12px;   /* secondary / helper text, labels         */
+  --fs-base: 14px;   /* body copy, nav links                    */
+  --fs-md:   16px;   /* card descriptions, prominent body copy  */
+  --fs-lg:   20px;   /* sub-headings                            */
+  --fs-xl:   24px;   /* section titles                          */
+  --fs-2xl:  32px;   /* display numbers                         */
+
+  /* Shared radius scale — Issue 7 */
+  --r-1: 4px;
+  --r-2: 8px;
+  --r-3: 12px;
+  --r-4: 16px;
+  --r-5: 24px;
+
   --border: rgba(16, 31, 58, 0.12);
   --border-strong: rgba(16, 31, 58, 0.22);
 
@@ -51,11 +77,12 @@
   --shadow-large:
     0 24px 64px rgba(16, 31, 58, 0.10);
 
-  --radius-xs: 5px;
-  --radius-sm: 9px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
+  /* Keep legacy radius vars so unchanged selectors still compile */
+  --radius-xs: var(--r-1);
+  --radius-sm: var(--r-2);
+  --radius-md: var(--r-3);
+  --radius-lg: var(--r-4);
+  --radius-xl: var(--r-5);
 
   --sidebar-width: 254px;
   --topbar-height: 76px;
@@ -93,7 +120,7 @@ body {
   background: var(--beige-200);
   color: var(--navy-950);
   font-family: var(--font-main);
-  font-size: 14px;
+  font-size: var(--fs-base);  /* 14px base — Issue 2 */
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -242,21 +269,23 @@ svg {
   letter-spacing: -1px;
 }
 
+/* Issue 3 & 11: brand-name ® superscript — keep small but legible */
 .brand-name span {
   margin-left: 2px;
   color: var(--beige-400);
-  font-size: 9px;
+  font-size: var(--fs-xs);   /* 11px: superscript */
   vertical-align: top;
 }
 
+/* Issues 1, 10: sidebar nav labels and section headings — raised to --fs-sm */
 .workspace-label,
 .nav-heading {
   margin: 0 0 12px 7px;
   color: #8e9bb0;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-xs);   /* 11px — monospace labels are legible at this size */
   font-weight: 500;
-  letter-spacing: 1.3px;
+  letter-spacing: 1.1px;
 }
 
 .workspace-switcher {
@@ -304,7 +333,7 @@ svg {
 .user-details strong {
   overflow: hidden;
   color: var(--beige-100);
-  font-size: 11px;
+  font-size: var(--fs-sm);   /* 12px — Issue 1 */
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -313,7 +342,7 @@ svg {
 .workspace-info span,
 .user-details span {
   color: #95a0b2;
-  font-size: 10px;
+  font-size: var(--fs-xs);   /* 11px */
 }
 
 .switcher-arrow {
@@ -394,12 +423,13 @@ svg {
   font-size: 17px;
 }
 
+/* Issue 20: nav shortcuts removed in HTML; keep CSS minimal */
 .nav-shortcut,
 .nav-count {
   margin-left: auto;
   color: #8390a4;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-xs);   /* 11px — legible */
 }
 
 .nav-link.active .nav-shortcut {
@@ -456,13 +486,13 @@ svg {
 
 .sidebar-status strong {
   color: var(--beige-100);
-  font-size: 11px;
+  font-size: var(--fs-sm);   /* 12px — Issue 1 */
   font-weight: 600;
 }
 
 .sidebar-status span:not(.status-indicator) {
   color: #8d9bb0;
-  font-size: 10px;
+  font-size: var(--fs-xs);   /* 11px */
 }
 
 .sidebar-bottom {
@@ -534,12 +564,13 @@ svg {
   border-bottom: 1px solid var(--border);
 }
 
+/* Issue 12: topbar breadcrumb — legible secondary text */
 .breadcrumb {
   display: flex;
   align-items: center;
   gap: 10px;
   color: var(--navy-500);
-  font-size: 12px;
+  font-size: var(--fs-sm);   /* 12px */
 }
 
 .breadcrumb-divider {
@@ -557,6 +588,7 @@ svg {
   gap: 17px;
 }
 
+/* Issue 16: environment badge — keep compact but legible at 11px */
 .environment-badge {
   display: inline-flex;
   min-height: 31px;
@@ -564,11 +596,11 @@ svg {
   gap: 8px;
   padding: 0 10px;
   border: 1px solid var(--border);
-  border-radius: 5px;
+  border-radius: var(--r-1);    /* 4px */
   background: rgba(255, 255, 255, 0.35);
   color: var(--navy-700);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-xs);   /* 11px */
   letter-spacing: 0.3px;
 }
 
@@ -626,15 +658,16 @@ svg {
   margin-bottom: 30px;
 }
 
+/* Issues 1, 9: eyebrows / section kickers — decorative mono labels */
 .eyebrow,
 .section-kicker,
 .panel-eyebrow,
 .metric-label {
   color: var(--navy-600);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-xs);   /* 11px — up from 9px */
   font-weight: 500;
-  letter-spacing: 1.25px;
+  letter-spacing: 1px;
 }
 
 .eyebrow {
@@ -653,8 +686,8 @@ svg {
 .date-label {
   color: var(--navy-500);
   font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.8px;
+  font-size: var(--fs-xs);   /* 11px */
+  letter-spacing: 0.6px;
 }
 
 
@@ -690,12 +723,13 @@ svg {
   color: var(--orange-500);
 }
 
+/* Issue 3: hero description — raise to --fs-md for comfort */
 .hero-description {
   max-width: 410px;
   margin: 24px 0 25px;
   color: var(--navy-600);
-  font-size: 13px;
-  line-height: 1.9;
+  font-size: var(--fs-md);   /* 16px — Issue 2, 3 */
+  line-height: 1.75;
 }
 
 .hero-actions {
@@ -705,16 +739,17 @@ svg {
   gap: 11px;
 }
 
+/* Issue 6, 25: primary button — solid, clearly primary CTA */
 .button {
   display: inline-flex;
-  min-height: 44px;
+  min-height: 44px;        /* Issue 7 touch target */
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: 0 16px;
+  padding: 0 18px;
   border: 1px solid transparent;
-  border-radius: 6px;
-  font-size: 11px;
+  border-radius: var(--r-2);  /* 8px — Issue 8 */
+  font-size: var(--fs-sm);    /* 12px — Issue 1 */
   font-weight: 700;
   cursor: pointer;
   transition:
@@ -733,6 +768,7 @@ svg {
   transform: translateY(0) scale(0.985);
 }
 
+/* Issue 25: Sign-in should be secondary, not primary — handled in HTML */
 .button-primary {
   background: var(--navy-950);
   color: var(--beige-100);
@@ -765,6 +801,7 @@ svg {
   font-size: 15px;
 }
 
+/* Issue 3: hero footnote — raise to 11px */
 .hero-footnote {
   display: flex;
   align-items: center;
@@ -772,8 +809,8 @@ svg {
   margin-top: 35px;
   color: var(--navy-500);
   font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 0.65px;
+  font-size: var(--fs-xs);   /* 11px */
+  letter-spacing: 0.5px;
 }
 
 .footnote-line {
@@ -826,8 +863,20 @@ svg {
   content: "";
 }
 
+.hero-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Issue 9: visual overlay labels — decorative, 8px acceptable */
 .visual-topline {
   position: absolute;
+  z-index: 4;
   top: 19px;
   right: 20px;
   left: 20px;
@@ -835,8 +884,8 @@ svg {
   justify-content: space-between;
   color: #8c9ab0;
   font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 1px;
+  font-size: 9px;
+  letter-spacing: 0.8px;
 }
 
 .orbit {
@@ -910,8 +959,8 @@ svg {
 .visual-center-label {
   color: var(--orange-500);
   font-family: var(--font-mono);
-  font-size: 7px;
-  letter-spacing: 1px;
+  font-size: var(--fs-xs);   /* 11px — readable */
+  letter-spacing: 0.8px;
 }
 
 .visual-node {
@@ -922,12 +971,12 @@ svg {
   gap: 7px;
   padding: 7px 9px;
   border: 1px solid rgba(232, 221, 200, 0.18);
-  border-radius: 4px;
+  border-radius: var(--r-1);  /* 4px */
   background: var(--navy-900);
   color: var(--beige-200);
   font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 0.6px;
+  font-size: var(--fs-xs);   /* 11px — legible */
+  letter-spacing: 0.5px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
@@ -976,6 +1025,7 @@ svg {
 
 .visual-coordinates {
   position: absolute;
+  z-index: 4;
   bottom: 49px;
   left: 20px;
   display: flex;
@@ -988,6 +1038,7 @@ svg {
 
 .visual-caption {
   position: absolute;
+  z-index: 4;
   right: 20px;
   bottom: 19px;
   left: 20px;
@@ -1030,11 +1081,12 @@ svg {
   font-style: italic;
 }
 
+/* Issue 3, 10: demo notice — raise body text to 12px */
 .demo-notice p {
   flex: 1;
   margin: 0;
   color: var(--navy-600);
-  font-size: 10px;
+  font-size: var(--fs-sm);  /* 12px — Issue 3 */
   line-height: 1.7;
 }
 
@@ -1047,11 +1099,11 @@ svg {
   flex-shrink: 0;
   padding: 5px 7px;
   border: 1px solid rgba(196, 110, 69, 0.25);
-  border-radius: 4px;
+  border-radius: var(--r-1);  /* 4px */
   color: var(--orange-600);
   font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 0.5px;
+  font-size: var(--fs-xs);   /* 11px */
+  letter-spacing: 0.4px;
 }
 
 
@@ -1105,10 +1157,11 @@ svg {
   gap: 8px;
 }
 
+/* Issue 1: metric label — raise to 11px (already had --fs-xs) */
 .metric-label {
   overflow: hidden;
-  font-size: 8px;
-  letter-spacing: 0.8px;
+  font-size: var(--fs-xs);   /* 11px — overrides base rule above */
+  letter-spacing: 0.7px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1171,18 +1224,18 @@ svg {
 .metric-change {
   align-self: center;
   padding: 3px 6px;
-  border-radius: 4px;
+  border-radius: var(--r-1);
   background: rgba(91, 133, 107, 0.16);
   color: #9bc5a4;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-xs);   /* 11px */
 }
 
 .metric-status {
   margin-left: auto;
   font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 0.5px;
+  font-size: var(--fs-xs);   /* 11px */
+  letter-spacing: 0.4px;
 }
 
 .success-text {
@@ -1223,7 +1276,7 @@ svg {
   margin-top: auto;
   padding-top: 15px;
   color: var(--navy-500);
-  font-size: 9px;
+  font-size: var(--fs-xs);   /* 11px — Issue 1 */
 }
 
 .metric-card-dark .metric-bottom {
@@ -1286,11 +1339,12 @@ svg {
   color: var(--orange-500);
 }
 
+/* Issue 9: section description text — raise to --fs-md */
 .section-heading p {
   margin: 10px 0 0;
   color: var(--navy-600);
-  font-size: 11px;
-  line-height: 1.8;
+  font-size: var(--fs-md);   /* 16px — Issues 2, 3 */
+  line-height: 1.7;
 }
 
 .section-index {
@@ -1298,7 +1352,7 @@ svg {
   padding-bottom: 5px;
   color: var(--navy-500);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-xs);   /* 11px */
 }
 
 
@@ -1327,11 +1381,12 @@ svg {
   gap: 18px;
 }
 
+/* Issue 13: pipeline eyebrow */
 .panel-eyebrow {
   display: block;
   margin-bottom: 5px;
   color: var(--navy-500);
-  font-size: 8px;
+  font-size: var(--fs-xs);   /* 11px */
 }
 
 .panel-heading h3 {
@@ -1350,11 +1405,11 @@ svg {
   gap: 8px;
   padding: 0 9px;
   border: 1px solid var(--border);
-  border-radius: 5px;
+  border-radius: var(--r-1);
   color: var(--navy-600);
   font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 0.7px;
+  font-size: var(--fs-xs);   /* 11px — Issue 1 */
+  letter-spacing: 0.5px;
 }
 
 .pipeline-status .status-indicator,
@@ -1383,11 +1438,14 @@ svg {
    14. PIPELINE STAGES
    ========================================================= */
 
+/* Issues 4, 5, 13: pipeline — 6 equal columns for 6 stages */
 .pipeline-track {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   margin-top: 38px;
   margin-bottom: 30px;
+  overflow-x: auto;          /* scroll gracefully if viewport narrow */
+  -webkit-overflow-scrolling: touch;
 }
 
 .pipeline-stage {
@@ -1411,10 +1469,11 @@ svg {
   gap: 5px;
 }
 
+/* Issue 13: stage stage number — legible at 11px */
 .stage-number {
   color: var(--navy-500);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-xs);   /* 11px */
 }
 
 .stage-icon {
@@ -1500,25 +1559,27 @@ svg {
   background: var(--red-500);
 }
 
+/* Issue 13: stage description — raise to 11px */
 .pipeline-stage h4 {
   margin: 0;
   color: var(--navy-950);
-  font-size: 11px;
+  font-size: var(--fs-sm);   /* 12px — Issue 1 */
   font-weight: 700;
 }
 
 .pipeline-stage p {
   margin: 4px 0 12px;
   color: var(--navy-500);
-  font-size: 9px;
+  font-size: var(--fs-xs);   /* 11px — Issue 1 */
 }
 
+/* Issue 13: stage state badge */
 .stage-state {
   display: inline-block;
   color: var(--navy-500);
   font-family: var(--font-mono);
-  font-size: 7px;
-  letter-spacing: 0.65px;
+  font-size: var(--fs-xs);   /* 11px — up from 7px */
+  letter-spacing: 0.5px;
 }
 
 .pipeline-stage.is-running .stage-state {
@@ -1564,13 +1625,13 @@ svg {
 
 .pipeline-footer-info strong {
   color: var(--navy-950);
-  font-size: 10px;
+  font-size: var(--fs-sm);   /* 12px */
   font-weight: 700;
 }
 
 .pipeline-footer-info span:not(.footer-indicator) {
   color: var(--navy-500);
-  font-size: 9px;
+  font-size: var(--fs-xs);   /* 11px */
 }
 
 
@@ -1578,6 +1639,7 @@ svg {
    15. TEXT BUTTONS
    ========================================================= */
 
+/* Issue 22: text-button — raise to 12px, fix icon from external-link to clear symbol */
 .text-button {
   display: inline-flex;
   align-items: center;
@@ -1586,7 +1648,7 @@ svg {
   border: 0;
   background: transparent;
   color: var(--navy-800);
-  font-size: 10px;
+  font-size: var(--fs-sm);   /* 12px — Issue 1 */
   font-weight: 700;
   cursor: pointer;
   transition:
@@ -1617,12 +1679,14 @@ svg {
   border-bottom: 1px solid var(--border);
 }
 
+/* Issue 14, 26: table title — raise to 13px */
 .table-title {
   display: flex;
   align-items: center;
   gap: 9px;
   color: var(--navy-950);
-  font-size: 11px;
+  font-size: var(--fs-base);  /* 14px — Issue 14 */
+  font-weight: 700;
 }
 
 .table-title-mark {
@@ -1639,11 +1703,11 @@ svg {
   height: 20px;
   place-items: center;
   padding: 0 5px;
-  border-radius: 4px;
+  border-radius: var(--r-1);
   background: var(--beige-150);
   color: var(--navy-600);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-xs);   /* 11px */
 }
 
 .table-filters {
@@ -1652,15 +1716,16 @@ svg {
   gap: 9px;
 }
 
+/* Issue 23: search field — wider on desktop (260px), adapts on mobile */
 .search-field {
   display: flex;
-  width: 190px;
+  width: 260px;              /* Issue 23 — wider search */
   min-height: 34px;
   align-items: center;
   gap: 8px;
   padding: 0 10px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--r-2);  /* 8px */
   background: var(--beige-100);
   color: var(--navy-500);
   transition: border-color var(--transition-fast);
@@ -1675,6 +1740,7 @@ svg {
   line-height: 1;
 }
 
+/* Issue 15: search input text — raise to 12px */
 .search-field input {
   width: 100%;
   min-width: 0;
@@ -1682,22 +1748,23 @@ svg {
   outline: 0;
   background: transparent;
   color: var(--navy-950);
-  font-size: 10px;
+  font-size: var(--fs-sm);   /* 12px */
 }
 
 .search-field input::placeholder {
   color: var(--navy-500);
 }
 
+/* Issue 14: table filter select */
 .table-filters select {
   min-height: 34px;
   max-width: 140px;
   padding: 0 25px 0 9px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--r-2);  /* 8px */
   background: var(--beige-100);
   color: var(--navy-700);
-  font-size: 10px;
+  font-size: var(--fs-sm);   /* 12px */
   cursor: pointer;
 }
 
@@ -1717,13 +1784,15 @@ svg {
   background: rgba(232, 221, 200, 0.20);
 }
 
+/* Issues 14, 15: table header — raise to 11px, align text under content */
 .deployments-table th {
   padding: 13px 16px;
   color: var(--navy-500);
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: var(--fs-xs);   /* 11px — Issue 14 */
   font-weight: 500;
-  letter-spacing: 0.65px;
+  letter-spacing: 0.5px;
+  text-align: left;          /* Issue 15: always left-align headers */
 }
 
 .deployments-table th:first-child,
@@ -1731,11 +1800,13 @@ svg {
   padding-left: 20px;
 }
 
+/* Issues 14, 26: table cell — raise to 12px */
 .deployments-table td {
   padding: 15px 16px;
   border-top: 1px solid rgba(16, 31, 58, 0.065);
   color: var(--navy-700);
-  font-size: 10px;
+  font-size: var(--fs-sm);   /* 12px — Issue 14 */
+  vertical-align: middle;
   transition: background var(--transition-fast);
 }
 
@@ -1774,44 +1845,46 @@ svg {
   gap: 2px;
 }
 
+/* Issue 14: release cell text */
 .release-cell strong {
   color: var(--navy-950);
-  font-size: 10px;
+  font-size: var(--fs-sm);   /* 12px */
   font-weight: 700;
 }
 
 .release-cell span:not(.release-mark) {
   color: var(--navy-500);
-  font-size: 9px;
+  font-size: var(--fs-xs);   /* 11px */
 }
 
 .branch-label {
   display: inline-block;
   padding: 4px 7px;
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--r-1);
   background: var(--beige-100);
   color: var(--navy-700);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-xs);   /* 11px */
 }
 
 .deployments-table code {
   color: var(--navy-700);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-xs);   /* 11px */
 }
 
+/* Issue 14, 16: status pill — raise to 11px, consistent radius */
 .status-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 7px;
+  padding: 4px 8px;
   border: 1px solid transparent;
-  border-radius: 4px;
+  border-radius: var(--r-1);  /* 4px */
   font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 0.35px;
+  font-size: var(--fs-xs);   /* 11px — Issue 14 */
+  letter-spacing: 0.3px;
 }
 
 .status-pill::before {
@@ -1842,12 +1915,12 @@ svg {
 
 .mono-cell {
   font-family: var(--font-mono);
-  font-size: 9px !important;
+  font-size: var(--fs-xs) !important;  /* 11px */
 }
 
 .time-cell {
   color: var(--navy-500) !important;
-  font-size: 9px !important;
+  font-size: var(--fs-xs) !important;  /* 11px */
 }
 
 .table-footer {
@@ -1858,13 +1931,13 @@ svg {
   padding: 14px 20px;
   border-top: 1px solid var(--border);
   color: var(--navy-500);
-  font-size: 9px;
+  font-size: var(--fs-xs);   /* 11px */
 }
 
 .table-footer > span:last-child {
   font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 0.4px;
+  font-size: var(--fs-xs);   /* 11px */
+  letter-spacing: 0.3px;
 }
 
 .footer-separator {
@@ -1904,7 +1977,7 @@ svg {
 .live-label {
   min-height: 25px;
   padding: 0 7px;
-  font-size: 7px;
+  font-size: var(--fs-xs);   /* 11px — Issue 27 */
 }
 
 .activity-list {
@@ -1927,7 +2000,7 @@ svg {
   flex-shrink: 0;
   place-items: center;
   border: 1px solid var(--border);
-  border-radius: 7px;
+  border-radius: var(--r-2);
   font-size: 12px;
 }
 
@@ -1955,22 +2028,22 @@ svg {
 .activity-content strong {
   display: block;
   color: var(--navy-950);
-  font-size: 10px;
+  font-size: var(--fs-sm);   /* 12px — Issue 1 */
   font-weight: 700;
 }
 
 .activity-content p {
   margin: 4px 0 7px;
   color: var(--navy-600);
-  font-size: 9px;
+  font-size: var(--fs-xs);   /* 11px — Issue 1 */
   line-height: 1.7;
 }
 
 .activity-content > span {
   color: var(--navy-500);
   font-family: var(--font-mono);
-  font-size: 7px;
-  letter-spacing: 0.4px;
+  font-size: var(--fs-xs);   /* 11px — was 7px; Issue 1 */
+  letter-spacing: 0.3px;
 }
 
 .activity-clear-button {
@@ -1982,7 +2055,7 @@ svg {
 .activity-empty {
   padding: 25px 0;
   color: var(--navy-500);
-  font-size: 10px;
+  font-size: var(--fs-sm);   /* 12px */
 }
 
 
@@ -2037,29 +2110,30 @@ svg {
   background: #719c7a;
 }
 
+/* Issues 27: terminal — raise title to 11px, body to 11px */
 .terminal-title strong {
   margin-left: 8px;
   color: #c8d1df;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-xs);   /* 11px */
   font-weight: 400;
 }
 
 .terminal-mode {
   color: #8492a8;
   font-family: var(--font-mono);
-  font-size: 7px;
-  letter-spacing: 0.45px;
+  font-size: var(--fs-xs);   /* 11px */
+  letter-spacing: 0.3px;
 }
 
 .terminal-body {
   flex: 1;
-  min-height: 220px;
-  padding: 22px 18px;
-  overflow: hidden;
+  min-height: 200px;         /* Issue 27: trim excess whitespace */
+  padding: 18px 18px;
+  overflow: auto;
   font-family: var(--font-mono);
-  font-size: 9px;
-  line-height: 2;
+  font-size: var(--fs-xs);   /* 11px — Issue 1 */
+  line-height: 1.85;
 }
 
 .terminal-line {
@@ -2105,8 +2179,8 @@ svg {
   border-top: 1px solid rgba(232, 221, 200, 0.10);
   color: #8492a8;
   font-family: var(--font-mono);
-  font-size: 7px;
-  letter-spacing: 0.45px;
+  font-size: var(--fs-xs);   /* 11px */
+  letter-spacing: 0.4px;
 }
 
 
@@ -2116,7 +2190,7 @@ svg {
 
 .integration-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
 }
 
@@ -2150,18 +2224,19 @@ svg {
   gap: 10px;
 }
 
+/* Issue 16: Standardize integration logo containers to identical dimensions and shape */
 .integration-icon {
   display: grid;
-  width: 39px;
-  height: 39px;
+  width: 40px;
+  height: 40px;
   place-items: center;
   border: 1px solid var(--border);
-  border-radius: 9px;
+  border-radius: var(--r-2);  /* 8px */
   background: var(--beige-150);
   color: var(--navy-950);
   font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--fs-sm);    /* 12px */
+  font-weight: 600;
 }
 
 .integration-github {
@@ -2172,30 +2247,55 @@ svg {
 .integration-actions {
   background: var(--orange-100);
   color: var(--orange-600);
-  font-size: 16px;
+}
+
+.integration-pipeline {
+  background: rgba(43, 90, 158, 0.15);
+  color: #2b5a9e;
 }
 
 .integration-aws {
   background: #f4e5c8;
   color: #8a572e;
-  font-size: 11px;
-  font-weight: 700;
+}
+
+.integration-cloudfront {
+  background: rgba(40, 104, 74, 0.15);
+  color: #28684a;
 }
 
 .integration-state {
-  padding: 5px 7px;
+  padding: 5px 8px;
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--r-1);  /* 4px */
   color: var(--navy-500);
   font-family: var(--font-mono);
-  font-size: 7px;
+  font-size: var(--fs-xs);   /* 11px */
   letter-spacing: 0.4px;
+}
+
+.integration-state-active {
+  border-color: rgba(40, 167, 69, 0.3);
+  background: rgba(40, 167, 69, 0.15);
+  color: #1e7e34;
+}
+
+.integration-state-planned {
+  border-color: rgba(83, 100, 123, 0.2);
+  background: rgba(83, 100, 123, 0.12);
+  color: #53647b;
+}
+
+.integration-state-configured {
+  border-color: rgba(196, 110, 69, 0.3);
+  background: rgba(196, 110, 69, 0.15);
+  color: #c46e45;
 }
 
 .integration-card h3 {
   margin: 21px 0 7px;
   color: var(--navy-950);
-  font-size: 15px;
+  font-size: var(--fs-md);   /* 16px */
   font-weight: 700;
   letter-spacing: -0.4px;
 }
@@ -2203,8 +2303,8 @@ svg {
 .integration-card p {
   margin: 0 0 18px;
   color: var(--navy-600);
-  font-size: 10px;
-  line-height: 1.8;
+  font-size: var(--fs-sm);   /* 12px */
+  line-height: 1.7;
 }
 
 .integration-bottom {
@@ -2217,13 +2317,13 @@ svg {
   border-top: 1px solid var(--border);
   color: var(--navy-500);
   font-family: var(--font-mono);
-  font-size: 7px;
+  font-size: var(--fs-xs);   /* 11px */
   letter-spacing: 0.45px;
 }
 
 .integration-bottom span:last-child {
   color: var(--orange-600);
-  font-size: 13px;
+  font-size: var(--fs-sm);   /* 12px */
 }
 
 
@@ -2244,7 +2344,7 @@ svg {
 
 .footer-brand {
   color: var(--navy-950);
-  font-size: 12px;
+  font-size: var(--fs-base); /* 14px */
   font-weight: 800;
   letter-spacing: 0.5px;
 }
@@ -2252,14 +2352,14 @@ svg {
 .footer-brand span {
   margin-left: 2px;
   color: var(--orange-600);
-  font-size: 8px;
+  font-size: var(--fs-xs);   /* 11px */
   vertical-align: top;
 }
 
 .app-footer p {
   margin: 0;
   color: var(--navy-500);
-  font-size: 10px;
+  font-size: var(--fs-sm);   /* 12px */
 }
 
 .footer-meta {
@@ -2268,7 +2368,7 @@ svg {
   gap: 14px;
   color: var(--navy-500);
   font-family: var(--font-mono);
-  font-size: 7px;
+  font-size: var(--fs-xs);   /* 11px */
   letter-spacing: 0.4px;
 }
 
@@ -2493,7 +2593,7 @@ svg {
   }
 
   .metric-label {
-    font-size: 7px;
+    font-size: var(--fs-xs);
   }
 
   .lower-grid {
@@ -2502,6 +2602,10 @@ svg {
 
   .terminal-body {
     min-height: 190px;
+  }
+
+  .integration-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -2568,7 +2672,7 @@ svg {
   }
 
   .integration-card:last-child {
-    grid-column: 1 / -1;
+    grid-column: auto;
   }
 
   .pipeline-panel {
@@ -2582,11 +2686,11 @@ svg {
   }
 
   .pipeline-stage h4 {
-    font-size: 10px;
+    font-size: var(--fs-sm);
   }
 
   .pipeline-stage p {
-    font-size: 8px;
+    font-size: var(--fs-xs);
   }
 }
 
@@ -2639,7 +2743,7 @@ svg {
 
   .environment-badge {
     padding: 0 7px;
-    font-size: 7px;
+    font-size: var(--fs-xs);
   }
 
   .notification-button {
@@ -2657,13 +2761,13 @@ svg {
   }
 
   .eyebrow {
-    font-size: 8px;
+    font-size: var(--fs-xs);
   }
 
   .date-label {
-    max-width: 110px;
+    max-width: 130px;
     text-align: right;
-    font-size: 7px;
+    font-size: var(--fs-xs);
   }
 
   .hero-copy h1 {
@@ -2672,12 +2776,12 @@ svg {
 
   .hero-description {
     margin-top: 19px;
-    font-size: 12px;
+    font-size: var(--fs-base);
   }
 
   .hero-footnote {
     margin-top: 25px;
-    font-size: 7px;
+    font-size: var(--fs-xs);
   }
 
   .hero-visual {
@@ -2771,7 +2875,7 @@ svg {
   }
 
   .stage-number {
-    font-size: 8px;
+    font-size: var(--fs-xs);
   }
 
   .stage-icon {
@@ -2808,7 +2912,7 @@ svg {
     grid-row: 1;
     grid-column: 2;
     align-self: end;
-    font-size: 11px;
+    font-size: var(--fs-sm);
   }
 
   .pipeline-stage p {
@@ -2816,14 +2920,14 @@ svg {
     grid-column: 2;
     align-self: start;
     margin: 3px 0 0;
-    font-size: 9px;
+    font-size: var(--fs-xs);
   }
 
   .stage-state {
     grid-row: 1 / 3;
     grid-column: 3;
     justify-self: end;
-    font-size: 7px;
+    font-size: var(--fs-xs);
   }
 
   .pipeline-footer {
@@ -2933,12 +3037,12 @@ svg {
 
   .breadcrumb {
     gap: 6px;
-    font-size: 10px;
+    font-size: var(--fs-xs);
   }
 
   .environment-badge {
     gap: 5px;
-    font-size: 6px;
+    font-size: var(--fs-xs);
   }
 
   .environment-dot {
@@ -2995,13 +3099,13 @@ svg {
 
   .visual-coordinates {
     left: 13px;
-    font-size: 7px;
+    font-size: var(--fs-xs);
   }
 
   .visual-caption {
     right: 13px;
     left: 13px;
-    font-size: 6px;
+    font-size: var(--fs-xs);
   }
 
   .metrics-grid {
@@ -3014,7 +3118,7 @@ svg {
   }
 
   .metric-label {
-    font-size: 7px;
+    font-size: var(--fs-xs);
     letter-spacing: 0.45px;
   }
 
@@ -3029,12 +3133,12 @@ svg {
   }
 
   .metric-status {
-    font-size: 7px;
+    font-size: var(--fs-xs);
   }
 
   .metric-bottom {
     align-items: flex-end;
-    font-size: 8px;
+    font-size: var(--fs-xs);
   }
 
   .mini-bars {
@@ -3055,7 +3159,7 @@ svg {
   }
 
   .pipeline-status {
-    font-size: 7px;
+    font-size: var(--fs-xs);
   }
 
   .terminal-header {
@@ -3064,13 +3168,13 @@ svg {
   }
 
   .terminal-mode {
-    font-size: 6px;
+    font-size: var(--fs-xs);
   }
 
   .terminal-body {
     padding-right: 12px;
     padding-left: 12px;
-    font-size: 8px;
+    font-size: var(--fs-xs);
   }
 
   .toast-container {

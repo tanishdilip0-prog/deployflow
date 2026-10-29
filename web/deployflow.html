@@ -48,7 +48,7 @@ footer{position:relative;z-index:2;padding:30px;text-align:center;color:var(--bu
 </head>
 <body>
 <canvas id="gl" aria-hidden="true"></canvas>
-<header><a class="brand" href="#top">DeployFlow</a><nav aria-label="Primary"><a href="#github">GitHub</a><a href="#test">Tests</a><a href="#build">Build</a><a href="#cicd">Pipeline</a><a href="#aws">Deploy</a></nav></header>
+<header><a class="brand" href="#top">DeployFlow</a><nav aria-label="Primary"><a href="../index.html" style="font-weight:700;">Dashboard ↗</a><a href="#github">GitHub</a><a href="#test">Tests</a><a href="#build">Build</a><a href="#cicd">Pipeline</a><a href="#aws">Deploy</a></nav></header>
 <div id="rail" role="navigation" aria-label="Pipeline stages"></div>
 <main>
 <section id="top" class="hero" data-stage="Push"><div class="panel"><h1>Push code. It <mark>ships itself.</mark></h1><p>DeployFlow takes every commit through testing, build and release, then lands it on your AWS infrastructure without a manual step.</p><a class="btn p" href="#aws">Start deploying</a><a class="btn s" href="#github">Follow a commit</a></div></section>
@@ -59,7 +59,8 @@ footer{position:relative;z-index:2;padding:30px;text-align:center;color:var(--bu
 <section id="aws" data-stage="AWS"><div class="panel"><img data-i="5" alt="Illustration of a cloud above rows of server racks"><div class="txt"><h2>Live on your <mark>AWS infrastructure</mark></h2><p>The artifact is released to your servers with health checks, and rolled back automatically if something looks wrong.</p><a class="btn p" href="mailto:hello@example.com">Connect your repository</a></div></div></section>
 </main>
 <footer>DeployFlow concept build. Replace the contact link with your real sign-up URL.</footer>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="three.min.js"></script>
+<script>if(!window.THREE){document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');}</script>
 <script>
 (function(){
 var B='#6b1426',K='#15100d',P='#f7eedd',T=window.THREE;
@@ -132,6 +133,8 @@ ren.render(scene,cam)}
 loop();
 })();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script><script src="live.js"></script><script src="github.js"></script>
-<script src="auth-buttons.js"></script></body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="live.js"></script>
+<script src="github.js"></script>
+</body>
 </html>
