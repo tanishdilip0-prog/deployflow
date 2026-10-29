@@ -746,6 +746,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (data.ok && Array.isArray(data.data)) {
         userRepositories = data.data;
         updateIntegrationsUI();
+        renderProjectCards(userRepositories);
         return data.data;
       }
     } catch (e) {
@@ -807,6 +808,84 @@ document.addEventListener("DOMContentLoaded", async () => {
     const branches = new Set(deployments.map(d => d.branch)).size;
     if (envElem) envElem.textContent = String(branches).padStart(2, '0');
   }
+
+  function renderProjectCards(repos) {
+    const grid = document.getElementById("projectsGrid");
+    const countElem = document.getElementById("sidebarProjectCount");
+    if (countElem) {
+      countElem.textContent = String(repos?.length || 0).padStart(2, '0');
+    }
+    if (!grid) return;
+
+    if (!repos || !repos.length) {
+      grid.innerHTML = `
+        <div class="projects-empty" id="projectsEmpty">
+          <span class="projects-empty-icon">▦</span>
+          <p>No repositories connected yet.</p>
+          <button class="btn btn-primary" onclick="document.getElementById('deployButton')?.click()">Connect a repository</button>
+        </div>
+      `;
+      return;
+    }
+
+    grid.innerHTML = repos.map(repo => {
+      const cfg = repo.config || {};
+      const latest = repo.latest_deployment || null;
+      const status = latest?.status || 'idle';
+      const statusClass = ['success', 'failed'].includes(status) ? status : (status === 'idle' ? 'idle' : 'building');
+      const branch = latest?.branch || repo.default_branch || 'main';
+      const commitSha = latest?.commit_hash ? latest.commit_hash.slice(0, 7) : '—';
+      const commitMsg = latest?.commit_message ? escapeHtml(latest.commit_message) : 'No recent commits';
+      
+      const s3Dest = cfg.s3_bucket ? escapeHtml(cfg.s3_bucket) : 'Local Preview Only';
+      const cfDomain = cfg.cloudfront_distribution_id ? escapeHtml(cfg.cloudfront_distribution_id) : 'Direct S3 / None';
+      const liveUrl = latest?.deployment_url || (latest?.status === 'success' && cfg.cloudfront_distribution_id ? `https://${cfg.cloudfront_distribution_id}.cloudfront.net` : null);
+
+      return `
+        <div class="project-card" data-repo-id="${escapeHtml(repo.id)}">
+          <div class="project-card-header">
+            <h3 class="project-repo-title">
+              <span class="project-repo-icon">⌥</span>
+              <span>${escapeHtml(repo.full_name || repo.name)}</span>
+            </h3>
+            <span class="project-badge-pill ${statusClass}">${escapeHtml(status)}</span>
+          </div>
+
+          <div class="project-card-meta">
+            <div class="project-meta-row">
+              <strong>Branch</strong>
+              <span class="project-meta-val">${escapeHtml(branch)}</span>
+            </div>
+            <div class="project-meta-row">
+              <strong>Commit</strong>
+              <span class="project-meta-val" title="${commitMsg}">${commitSha} (${commitMsg})</span>
+            </div>
+            <div class="project-meta-row">
+              <strong>S3 Destination</strong>
+              <span class="project-meta-val" title="${s3Dest}">s3://${s3Dest}</span>
+            </div>
+            <div class="project-meta-row">
+              <strong>Distribution</strong>
+              <span class="project-meta-val">${cfDomain}</span>
+            </div>
+          </div>
+
+          <div class="project-card-actions">
+            ${liveUrl ? `<a href="${escapeHtml(liveUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">Open Live</a>` : ''}
+            <button class="btn btn-primary" onclick="openDeployModalForRepo('${escapeHtml(repo.id)}')">Deploy</button>
+            ${latest?.id ? `<button class="btn btn-secondary" onclick="viewDeploymentDetails('${escapeHtml(latest.id)}')">Logs</button>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  window.openDeployModalForRepo = function(repoId) {
+    const modal = document.getElementById("deployModal");
+    const select = document.getElementById("deployRepoSelect");
+    if (select) select.value = repoId;
+    if (modal) modal.classList.add("active");
+  };
 
   function renderDeploymentsTable(deployments) {
     const tbody = document.getElementById("deploymentTableBody");

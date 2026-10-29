@@ -73,6 +73,12 @@
           <span class="nav-count" id="sidebarDeploymentCount">03</span>
         </a>
 
+        <a href="#projects" class="nav-link" data-section="projects">
+          <span class="nav-icon">▦</span>
+          <span>Projects</span>
+          <span class="nav-count" id="sidebarProjectCount">00</span>
+        </a>
+
         <a href="#activity" class="nav-link" data-section="activity">
           <span class="nav-icon">◷</span>
           <span>Activity log</span>
@@ -656,6 +662,34 @@
             <span>DEMO DATA <span class="footer-separator">/</span> 001–003</span>
           </div>
 
+        </div>
+
+      </section>
+
+
+      <!-- =========================================
+           PROJECTS (multi-repo cards)
+      ========================================== -->
+      <section class="page-section content-section" id="projects">
+
+        <div class="section-heading">
+          <div>
+            <span class="section-kicker">REPOSITORIES / 03</span>
+            <h2>Connected projects<span>.</span></h2>
+          </div>
+          <p class="section-desc">
+            Each registered repository has its own isolated S3 destination,
+            CloudFront distribution, and deployment pipeline.
+          </p>
+        </div>
+
+        <div id="projectsGrid" class="projects-grid" role="list" aria-label="Connected projects">
+          <!-- Populated by renderProjectCards() in script.js -->
+          <div class="projects-empty" id="projectsEmpty">
+            <span class="projects-empty-icon">▦</span>
+            <p>No repositories connected yet.</p>
+            <button class="btn btn-primary" id="addProjectBtn">Connect a repository</button>
+          </div>
         </div>
 
       </section>
