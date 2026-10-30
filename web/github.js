@@ -242,6 +242,27 @@
     renderConnectForm(ghRepos);
   }
 
+  var OAUTH_ALLOWED_ORIGINS = [
+    'http://localhost:3001',
+    'http://127.0.0.1:3001',
+    'https://d1chawsz7an8u9.cloudfront.net'
+  ];
+
+  function getOAuthRedirectUrl() {
+    if (window.location.protocol === 'file:') {
+      return 'http://localhost:3001/';
+    }
+    var origin = window.location.origin;
+    if (OAUTH_ALLOWED_ORIGINS.indexOf(origin) === -1) {
+      throw new Error(
+        'OAuth redirect blocked: "' + origin + '" is not in the DeployFlow allowlist. ' +
+        'Allowed origins: ' + OAUTH_ALLOWED_ORIGINS.join(', ')
+      );
+    }
+    return origin + '/';
+  }
+
+  var isAuthenticating = false;
   window.DFRepo = { open: openRepoPicker };
 
   window.DFAuth = {
@@ -250,15 +271,17 @@
         alert('Authentication service initializing. Please retry in a few seconds.');
         return;
       }
-      var targetUrl = window.location.protocol === 'file:'
-        ? 'http://localhost:3001/web/deployflow.html'
-        : window.location.origin + window.location.pathname;
+      if (isAuthenticating) return;
+      isAuthenticating = true;
+      var targetUrl = getOAuthRedirectUrl();
       sb.auth.signInWithOAuth({
         provider: provider,
         options: {
           redirectTo: targetUrl,
           scopes: provider === 'github' ? 'repo read:user' : undefined
         }
+      }).catch(function () {
+        isAuthenticating = false;
       });
     },
     signOut: async function () {

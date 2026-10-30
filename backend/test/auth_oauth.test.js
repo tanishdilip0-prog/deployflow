@@ -2,39 +2,54 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 test('OAuth Redirect & State Isolation: getOAuthRedirectUrl semantics', () => {
-  // Test 1: Clean origin and path preservation (no fragments or query pollution)
-  function getOAuthRedirectUrlMock(currentHref, protocol) {
+  const OAUTH_ALLOWED_ORIGINS = [
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+    "https://d1chawsz7an8u9.cloudfront.net"
+  ];
+
+  function getOAuthRedirectUrlMock(currentOrigin, protocol) {
     if (protocol === "file:") {
       return "http://localhost:3001/";
     }
-    const url = new URL(currentHref);
-    url.hash = "";
-    url.search = "";
-    return url.toString();
+    if (!OAUTH_ALLOWED_ORIGINS.includes(currentOrigin)) {
+      throw new Error(
+        `OAuth redirect blocked: "${currentOrigin}" is not in the DeployFlow allowlist. ` +
+        `Allowed origins: ${OAUTH_ALLOWED_ORIGINS.join(", ")}`
+      );
+    }
+    return currentOrigin + "/";
   }
 
   // CloudFront live website
   assert.equal(
-    getOAuthRedirectUrlMock('https://d1chawsz7an8u9.cloudfront.net/index.html#deployments', 'https:'),
-    'https://d1chawsz7an8u9.cloudfront.net/index.html'
+    getOAuthRedirectUrlMock('https://d1chawsz7an8u9.cloudfront.net', 'https:'),
+    'https://d1chawsz7an8u9.cloudfront.net/'
   );
 
   // Local development port 3001
   assert.equal(
-    getOAuthRedirectUrlMock('http://localhost:3001/?code=123#overview', 'http:'),
+    getOAuthRedirectUrlMock('http://localhost:3001', 'http:'),
     'http://localhost:3001/'
+  );
+
+  // Local development 127.0.0.1:3001 (not swapped to localhost)
+  assert.equal(
+    getOAuthRedirectUrlMock('http://127.0.0.1:3001', 'http:'),
+    'http://127.0.0.1:3001/'
   );
 
   // File protocol fallback
   assert.equal(
-    getOAuthRedirectUrlMock('file:///Users/deployflow/index.html', 'file:'),
+    getOAuthRedirectUrlMock('', 'file:'),
     'http://localhost:3001/'
   );
 
-  // Must NEVER redirect to Jarvis (port 3000 or jarvis domains)
-  const result = getOAuthRedirectUrlMock('https://d1chawsz7an8u9.cloudfront.net/index.html', 'https:');
-  assert.ok(!result.includes(':3000'), 'Redirect URL must not point to port 3000 (Jarvis)');
-  assert.ok(!result.toLowerCase().includes('jarvis'), 'Redirect URL must not reference Jarvis');
+  // Must reject port 3000 / Jarvis with clear error
+  assert.throws(
+    () => getOAuthRedirectUrlMock('http://localhost:3000', 'http:'),
+    /OAuth redirect blocked: "http:\/\/localhost:3000" is not in the DeployFlow allowlist/
+  );
 });
 
 test('OAuth Redirect: GitHub authorization response targets DeployFlow project callback', async () => {

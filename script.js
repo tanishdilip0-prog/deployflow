@@ -13,20 +13,30 @@ document.addEventListener("DOMContentLoaded", async () => {
   let pollInterval = null;
   let allDeployments = [];
   let userRepositories = [];
+  let isDemoMode = false;
 
   // -------------------------------------------------------------
   // Helpers & Formatting
   // -------------------------------------------------------------
+  // Allowed OAuth redirect origins — never redirect to port 3000 or unknown hosts
+  const OAUTH_ALLOWED_ORIGINS = [
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+    "https://d1chawsz7an8u9.cloudfront.net"
+  ];
+
   function getOAuthRedirectUrl() {
     if (window.location.protocol === "file:") {
       return "http://localhost:3001/";
     }
-    // Return clean base URL with pathname (e.g. https://domain.cloudfront.net/ or /index.html)
-    // Strip hash fragments and query params so OAuth callback lands cleanly on the app
-    const url = new URL(window.location.href);
-    url.hash = "";
-    url.search = "";
-    return url.toString();
+    const origin = window.location.origin;
+    if (!OAUTH_ALLOWED_ORIGINS.includes(origin)) {
+      throw new Error(
+        `OAuth redirect blocked: "${origin}" is not in the DeployFlow allowlist. ` +
+        `Allowed origins: ${OAUTH_ALLOWED_ORIGINS.join(", ")}`
+      );
+    }
+    return origin + "/";
   }
   function formatDuration(ms) {
     if (!ms || ms <= 0) return "—";
@@ -170,11 +180,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         <span style="padding:0 8px;">OR CONTINUE WITH</span>
         <span style="flex:1; border-bottom:1px solid #d9cbb4;"></span>
       </div>
-      <button id="authGithubBtn" class="button button-secondary" style="width:100%; padding:9px; margin-bottom:8px; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;">
+      <button id="authGithubBtn" class="button button-secondary" style="width:100%; padding:9px; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;">
         <span>⌘</span> Continue with GitHub
-      </button>
-      <button id="authGoogleBtn" class="button button-secondary" style="width:100%; padding:9px; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;">
-        <span>G</span> Continue with Google
       </button>
     `;
 
@@ -184,7 +191,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const passInput = container.querySelector("#authPasswordInput");
     const submitBtn = container.querySelector("#authSubmitBtn");
     const ghBtn = container.querySelector("#authGithubBtn");
-    const ggBtn = container.querySelector("#authGoogleBtn");
 
     submitBtn.onclick = async () => {
       const email = emailInput.value.trim();
@@ -249,25 +255,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         errBox.style.display = "block";
       });
     };
-
-    ggBtn.onclick = () => {
-      if (!sb) return alert("Supabase auth initializing...");
-      ggBtn.disabled = true;
-      ggBtn.innerHTML = `<span>⏳</span> Connecting to Google...`;
-      sb.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: getOAuthRedirectUrl() }
-      }).catch(err => {
-        ggBtn.disabled = false;
-        ggBtn.innerHTML = `<span>G</span> Continue with Google`;
-        errBox.textContent = err?.message || "Google sign-in failed.";
-        errBox.style.display = "block";
-      });
-    };
   }
 
   // -------------------------------------------------------------
-  // Connect Repository Modal
+  // Connect Repository Modal (Task 3: Simplified 3-Step Flow)
   // -------------------------------------------------------------
   async function openConnectRepoModal() {
     if (!activeToken) {
@@ -275,65 +266,120 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
+    let isOAuthing = false;
     const container = document.createElement("div");
+
+    function renderStepsHeader(currentStep, ghConnected) {
+      return `
+        <div class="connect-steps">
+          <div class="connect-step-item ${ghConnected ? 'completed' : 'active'}">
+            <span class="connect-step-num">${ghConnected ? '✓' : '1'}</span>
+            <span>Connect GitHub</span>
+          </div>
+          <span class="connect-step-arrow">→</span>
+          <div class="connect-step-item ${currentStep === 2 ? 'active' : (currentStep > 2 ? 'completed' : '')}">
+            <span class="connect-step-num">2</span>
+            <span>Pick Repository</span>
+          </div>
+          <span class="connect-step-arrow">→</span>
+          <div class="connect-step-item ${currentStep === 3 ? 'active' : ''}">
+            <span class="connect-step-num">3</span>
+            <span>Branch & Continue</span>
+          </div>
+        </div>
+      `;
+    }
+
     container.innerHTML = `
-      <div id="connectRepoMsg" style="display:none; padding:8px; border-radius:4px; font-size:12px; margin-bottom:12px;"></div>
-      <div style="display:flex; gap:8px; margin-bottom:14px;">
-        <button id="tabGhBtn" class="button button-primary" style="flex:1; padding:8px 12px; font-size:12px; font-weight:600; cursor:pointer;">From Authorized GitHub</button>
-        <button id="tabManualBtn" class="button button-secondary" style="flex:1; padding:8px 12px; font-size:12px; font-weight:600; cursor:pointer;">Manual Entry</button>
-      </div>
+      <div id="connectStepsHeader"></div>
+      <div id="connectRepoMsg" style="display:none; padding:8px 12px; border-radius:6px; font-size:12px; margin-bottom:14px;"></div>
       <div id="connectTabContent"></div>
+      <div id="manualToggleArea" style="margin-top:16px; border-top:1px solid #d9cbb4; padding-top:12px; text-align:center;">
+        <button id="toggleManualLink" type="button" style="background:none; border:none; color:#53647b; font-size:11px; cursor:pointer; text-decoration:underline;">
+          Or enter repository manually (owner/repo)
+        </button>
+      </div>
     `;
 
-    const overlay = createModal("connectRepoModal", "Connect Repository to DeployFlow", container);
+    const overlay = createModal("connectRepoModal", "Connect GitHub Repository", container);
+    const stepsHeaderBox = container.querySelector("#connectStepsHeader");
     const msgBox = container.querySelector("#connectRepoMsg");
-    const tabGhBtn = container.querySelector("#tabGhBtn");
-    const tabManualBtn = container.querySelector("#tabManualBtn");
     const contentBox = container.querySelector("#connectTabContent");
+    const toggleManualLink = container.querySelector("#toggleManualLink");
 
     function showMsg(text, isError) {
       msgBox.textContent = text;
       msgBox.style.display = "block";
-      msgBox.style.background = isError ? "rgba(179,18,46,0.12)" : "rgba(40,167,69,0.12)";
+      msgBox.style.background = isError ? "rgba(179,18,46,0.1)" : "rgba(40,167,69,0.1)";
       msgBox.style.color = isError ? "#b3122e" : "#1e7e34";
+      msgBox.style.border = isError ? "1px solid rgba(179,18,46,0.2)" : "1px solid rgba(40,167,69,0.2)";
     }
 
-    async function showGhTab() {
-      tabGhBtn.className = "button button-primary";
-      tabManualBtn.className = "button button-secondary";
+    function triggerOAuth(btnElem) {
+      if (isOAuthing) return;
+      isOAuthing = true;
+      if (btnElem) {
+        btnElem.disabled = true;
+        btnElem.innerHTML = `<span>⏳</span> Connecting to GitHub...`;
+      }
       msgBox.style.display = "none";
-      contentBox.innerHTML = `<p style="font-size:12px; color:#53647b;">Checking GitHub authorization...</p>`;
+      try {
+        const redirectUrl = getOAuthRedirectUrl();
+        sb.auth.signInWithOAuth({
+          provider: "github",
+          options: {
+            redirectTo: redirectUrl,
+            scopes: "repo read:user"
+          }
+        }).catch(err => {
+          isOAuthing = false;
+          if (btnElem) {
+            btnElem.disabled = false;
+            btnElem.innerHTML = `<span>⌘</span> Connect GitHub`;
+          }
+          showMsg(err?.message || "GitHub connection failed. Please retry.", true);
+        });
+      } catch (err) {
+        isOAuthing = false;
+        if (btnElem) {
+          btnElem.disabled = false;
+          btnElem.innerHTML = `<span>⌘</span> Connect GitHub`;
+        }
+        showMsg(err?.message || "Redirect error.", true);
+      }
+    }
 
+    async function loadGitHubFlow() {
+      // Step 1: Check GitHub authorization state
       if (!session || !session.provider_token) {
+        stepsHeaderBox.innerHTML = renderStepsHeader(1, false);
         contentBox.innerHTML = `
-          <p style="font-size:12px; line-height:1.6; color:#53647b; margin-top:0;">
-            To import repositories directly from your GitHub account, sign in with GitHub. Alternatively, you can use the <strong>Manual Entry</strong> tab to connect any repository by its <code>owner/repo</code> name.
-          </p>
-          <button id="connectGhAuthBtn" class="button button-primary" style="width:100%; padding:10px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
-            <span>⌘</span> Authorize & Connect GitHub
-          </button>
+          <div style="background:var(--paper); border:1px solid #101f3a; border-radius:8px; padding:18px; text-align:center;">
+            <p style="font-size:13px; line-height:1.55; color:#53647b; margin:0 0 16px 0;">
+              Connect your GitHub account to import repositories and enable automated CI/CD deployments.
+            </p>
+            <button id="step1ConnectBtn" class="button button-primary" style="width:100%; padding:12px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+              <span>⌘</span> Connect GitHub
+            </button>
+          </div>
         `;
-        contentBox.querySelector("#connectGhAuthBtn").onclick = () => {
-          if (!sb) return alert("Supabase auth initializing...");
-          const btn = contentBox.querySelector("#connectGhAuthBtn");
-          btn.disabled = true;
-          btn.innerHTML = `<span>⏳</span> Connecting to GitHub...`;
-          sb.auth.signInWithOAuth({
-            provider: "github",
-            options: {
-              redirectTo: getOAuthRedirectUrl(),
-              scopes: "repo read:user"
-            }
-          }).catch(err => {
-            btn.disabled = false;
-            btn.innerHTML = `<span>⌘</span> Authorize & Connect GitHub`;
-            showMsg(err?.message || "GitHub authorization failed.", true);
-          });
+        contentBox.querySelector("#step1ConnectBtn").onclick = function () {
+          triggerOAuth(this);
         };
         return;
       }
 
-      contentBox.innerHTML = `<p style="font-size:12px; color:#53647b;">Fetching your repositories from GitHub...</p>`;
+      // Step 2 & 3: User is connected with GitHub, fetch repositories
+      stepsHeaderBox.innerHTML = renderStepsHeader(2, true);
+      contentBox.innerHTML = `
+        <div class="connect-state-badge connect-state-connected">
+          <span>✓</span> GitHub connected
+        </div>
+        <div style="padding:24px; text-align:center; color:#53647b; font-size:13px;">
+          <span>⏳ Loading your repositories from GitHub...</span>
+        </div>
+      `;
+
       try {
         const res = await fetch(`${API}/api/github/repos`, {
           headers: {
@@ -342,42 +388,71 @@ document.addEventListener("DOMContentLoaded", async () => {
           }
         });
         const data = await res.json();
-        if (!data.ok || !data.data || !data.data.length) {
+
+        // Error state: Token expired or rejected
+        if (!data.ok) {
+          stepsHeaderBox.innerHTML = renderStepsHeader(1, false);
           contentBox.innerHTML = `
-            <div style="color:#b3122e; background:rgba(179,18,46,0.08); padding:10px; border-radius:4px; font-size:12px; margin-bottom:12px;">
-              ${data.error || "No repositories found for this GitHub account or token expired."}
+            <div class="connect-state-badge connect-state-error">
+              <span>✕</span> GitHub session expired or invalid
             </div>
-            <button id="reauthGhBtn" class="button button-secondary" style="width:100%; padding:9px; cursor:pointer;">
-              Re-authenticate with GitHub
+            <p style="font-size:12px; color:#53647b; margin:0 0 14px 0;">
+              ${data.error || "GitHub access token has expired or was revoked. Re-authenticate to reload your repositories."}
+            </p>
+            <button id="reauthBtn" class="button button-primary" style="width:100%; padding:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+              <span>⌘</span> Re-authenticate with GitHub
             </button>
           `;
-          contentBox.querySelector("#reauthGhBtn").onclick = () => {
-            const btn = contentBox.querySelector("#reauthGhBtn");
-            btn.disabled = true;
-            btn.textContent = "Connecting to GitHub...";
-            sb.auth.signInWithOAuth({
-              provider: "github",
-              options: { redirectTo: getOAuthRedirectUrl(), scopes: "repo read:user" }
-            }).catch(err => {
-              btn.disabled = false;
-              btn.textContent = "Re-authenticate with GitHub";
-              showMsg(err?.message || "Re-authentication failed.", true);
-            });
+          contentBox.querySelector("#reauthBtn").onclick = function () {
+            triggerOAuth(this);
           };
           return;
         }
 
-        const repos = data.data;
+        // Empty state: No repositories found
+        const repos = data.data || [];
+        if (!repos.length) {
+          stepsHeaderBox.innerHTML = renderStepsHeader(2, true);
+          contentBox.innerHTML = `
+            <div class="connect-state-badge connect-state-connected">
+              <span>✓</span> GitHub connected
+            </div>
+            <div class="connect-state-empty">
+              <p style="font-size:13px; font-weight:600; color:#101f3a; margin:0 0 6px 0;">No repositories found</p>
+              <p style="font-size:12px; color:#53647b; margin:0 0 14px 0;">
+                No repositories were found in your GitHub account or permissions are limited.
+              </p>
+              <button id="refreshReposBtn" class="button button-secondary" style="padding:8px 16px; font-size:12px; cursor:pointer;">
+                ↻ Refresh from GitHub
+              </button>
+            </div>
+          `;
+          contentBox.querySelector("#refreshReposBtn").onclick = () => loadGitHubFlow();
+          return;
+        }
+
+        // Connected state with repositories: Steps 2 and 3
+        stepsHeaderBox.innerHTML = renderStepsHeader(2, true);
         contentBox.innerHTML = `
-          <label style="display:block; font-size:11px; font-weight:700; margin-bottom:4px; color:#53647b;">SELECT REPOSITORY</label>
-          <select id="ghRepoSelect" style="width:100%; padding:10px; border:1px solid #101f3a; border-radius:4px; margin-bottom:12px; font:inherit; background:#fff; box-sizing:border-box;">
-            <option value="" disabled selected>-- Select a repository to connect --</option>
+          <div class="connect-state-badge connect-state-connected">
+            <span>✓</span> GitHub connected (${repos.length} repositories available)
+          </div>
+
+          <label style="display:block; font-size:11px; font-weight:700; margin-bottom:4px; color:#53647b;">
+            STEP 2: SELECT REPOSITORY
+          </label>
+          <select id="ghRepoSelect" style="width:100%; padding:10px; border:1px solid #101f3a; border-radius:4px; margin-bottom:14px; font:inherit; background:#fff; box-sizing:border-box;">
+            <option value="" disabled selected>-- Select a repository --</option>
             ${repos.map((r, i) => `<option value="${i}">${r.full_name}${r.private ? " (private)" : ""}</option>`).join('')}
           </select>
-          <label style="display:block; font-size:11px; font-weight:700; margin-bottom:4px; color:#53647b;">DEFAULT BRANCH</label>
-          <input type="text" id="ghBranchInput" value="main" style="width:100%; padding:10px; border:1px solid #101f3a; border-radius:4px; margin-bottom:16px; font:inherit; box-sizing:border-box;">
-          <button id="ghConnectSubmitBtn" class="button button-primary" style="width:100%; padding:10px; font-weight:600; cursor:pointer;" disabled>
-            Connect Repository
+
+          <label style="display:block; font-size:11px; font-weight:700; margin-bottom:4px; color:#53647b;">
+            STEP 3: DEPLOY BRANCH
+          </label>
+          <input type="text" id="ghBranchInput" value="main" placeholder="e.g. main" style="width:100%; padding:10px; border:1px solid #101f3a; border-radius:4px; margin-bottom:18px; font:inherit; box-sizing:border-box;">
+
+          <button id="ghConnectSubmitBtn" class="button button-primary" style="width:100%; padding:11px; font-weight:600; cursor:pointer;" disabled>
+            Connect Repository & Continue →
           </button>
         `;
 
@@ -394,6 +469,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           if (chosen) {
             branchIn.value = chosen.default_branch || "main";
             submitBtn.disabled = false;
+            stepsHeaderBox.innerHTML = renderStepsHeader(3, true);
           }
         };
 
@@ -404,14 +480,28 @@ document.addEventListener("DOMContentLoaded", async () => {
           await submitConnection(chosen.full_name, branchIn.value.trim() || "main", submitBtn);
         };
       } catch (err) {
-        contentBox.innerHTML = `<p style="font-size:12px; color:#b3122e;">Could not connect to GitHub API.</p>`;
+        stepsHeaderBox.innerHTML = renderStepsHeader(1, false);
+        contentBox.innerHTML = `
+          <div class="connect-state-badge connect-state-error">
+            <span>✕</span> Network error
+          </div>
+          <p style="font-size:12px; color:#53647b; margin:0 0 14px 0;">
+            Could not reach DeployFlow backend or GitHub API. Please check your connection.
+          </p>
+          <button id="retryBtn" class="button button-secondary" style="width:100%; padding:9px; cursor:pointer;">
+            Retry Connection
+          </button>
+        `;
+        contentBox.querySelector("#retryBtn").onclick = () => loadGitHubFlow();
       }
     }
 
-    function showManualTab() {
-      tabGhBtn.className = "button button-secondary";
-      tabManualBtn.className = "button button-primary";
-      msgBox.style.display = "none";
+    function showManualForm() {
+      stepsHeaderBox.innerHTML = `
+        <div style="font-size:12px; font-weight:600; color:#53647b; margin-bottom:12px;">
+          Manual Repository Connection (Public or configured deploy keys)
+        </div>
+      `;
       contentBox.innerHTML = `
         <label style="display:block; font-size:11px; font-weight:700; margin-bottom:4px; color:#53647b;">REPOSITORY (OWNER/REPO)</label>
         <input type="text" id="manualRepoInput" placeholder="e.g. acme/web-app" style="width:100%; padding:10px; border:1px solid #101f3a; border-radius:4px; margin-bottom:12px; font:inherit; box-sizing:border-box;">
@@ -469,14 +559,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
-    tabGhBtn.onclick = showGhTab;
-    tabManualBtn.onclick = showManualTab;
+    toggleManualLink.onclick = () => {
+      showManualForm();
+      toggleManualLink.style.display = "none";
+    };
 
-    if (session && session.provider_token) {
-      showGhTab();
-    } else {
-      showManualTab();
-    }
+    // Load initial 3-step GitHub flow
+    loadGitHubFlow();
   }
 
   // -------------------------------------------------------------
@@ -707,6 +796,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Data Fetching & UI Updates
   // -------------------------------------------------------------
   function updateUserUI() {
+    const landingView = document.getElementById("landingView");
+    const appShell = document.getElementById("appShell");
     const avatar = document.getElementById("sidebarAvatar");
     const nameElem = document.getElementById("sidebarUserName");
     const emailElem = document.getElementById("sidebarUserEmail");
@@ -714,6 +805,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const envBadge = document.getElementById("envBadgeText");
 
     if (currentUser) {
+      if (landingView) landingView.classList.add("hidden");
+      if (appShell) appShell.classList.remove("hidden");
+
       const email = currentUser.email || "developer@deployflow.dev";
       const initial = email.charAt(0).toUpperCase();
       if (avatar) avatar.textContent = initial;
@@ -725,6 +819,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
       if (envBadge) envBadge.textContent = "CONNECTED (SUPABASE)";
     } else {
+      if (isDemoMode) {
+        if (landingView) landingView.classList.add("hidden");
+        if (appShell) appShell.classList.remove("hidden");
+      } else {
+        if (landingView) landingView.classList.remove("hidden");
+        if (appShell) appShell.classList.add("hidden");
+      }
+
       if (avatar) avatar.textContent = "DF";
       if (nameElem) nameElem.textContent = "Developer";
       if (emailElem) emailElem.textContent = "Signed out";
@@ -1235,18 +1337,70 @@ document.addEventListener("DOMContentLoaded", async () => {
   // -------------------------------------------------------------
   // Action Buttons Wiring
   // -------------------------------------------------------------
+  const landingGhBtn = document.getElementById("landingGithubBtn");
+  const landingErr = document.getElementById("landingError");
+  if (landingGhBtn) {
+    landingGhBtn.onclick = () => {
+      if (!sb) {
+        if (landingErr) {
+          landingErr.textContent = "Connecting to authentication service... Please retry in a moment.";
+          landingErr.style.display = "block";
+        }
+        return;
+      }
+      landingGhBtn.disabled = true;
+      landingGhBtn.innerHTML = `<span>⏳</span> Connecting to GitHub...`;
+      if (landingErr) landingErr.style.display = "none";
+      try {
+        const redirectUrl = getOAuthRedirectUrl();
+        sb.auth.signInWithOAuth({
+          provider: "github",
+          options: {
+            redirectTo: redirectUrl,
+            scopes: "repo read:user"
+          }
+        }).catch(err => {
+          landingGhBtn.disabled = false;
+          landingGhBtn.innerHTML = `<span class="landing-gh-icon">⌘</span><span>Continue with GitHub</span>`;
+          if (landingErr) {
+            landingErr.textContent = err?.message || "GitHub authentication failed. Please try again.";
+            landingErr.style.display = "block";
+          }
+        });
+      } catch (err) {
+        landingGhBtn.disabled = false;
+        landingGhBtn.innerHTML = `<span class="landing-gh-icon">⌘</span><span>Continue with GitHub</span>`;
+        if (landingErr) {
+          landingErr.textContent = err?.message || "Redirect error.";
+          landingErr.style.display = "block";
+        }
+      }
+    };
+  }
+
+  document.getElementById("landingEmailBtn")?.addEventListener("click", () => {
+    openAuthModal();
+  });
+
+  document.getElementById("landingExploreBtn")?.addEventListener("click", () => {
+    isDemoMode = true;
+    updateUserUI();
+  });
+
   document.getElementById("authButton")?.addEventListener("click", () => {
     if (currentUser) {
       if (confirm("Are you sure you want to sign out?")) {
         if (sb) sb.auth.signOut();
         activeToken = null;
         currentUser = null;
+        isDemoMode = false;
         updateUserUI();
         if (pollInterval) clearInterval(pollInterval);
         showToast("Signed out", "info");
       }
     } else {
-      openAuthModal();
+      isDemoMode = false;
+      updateUserUI();
     }
   });
 

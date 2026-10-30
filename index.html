@@ -28,7 +28,38 @@
 </head>
 
 <body>
-  <div class="app-shell">
+  <!-- =========================================
+       MINIMAL LANDING / SIGN-IN VIEW (TASK 2)
+  ========================================== -->
+  <div class="landing-view" id="landingView">
+    <div class="landing-card">
+      <div class="landing-brand">
+        <span class="brand-symbol">D<span>.</span></span>
+        <span class="brand-name">deployflow<span>®</span></span>
+      </div>
+
+      <h1 class="landing-title">Ship with confidence.</h1>
+
+      <p class="landing-desc">
+        Automated delivery platform: push code to GitHub and ship directly to AWS.
+      </p>
+
+      <div id="landingError" class="landing-error" style="display: none;"></div>
+
+      <button id="landingGithubBtn" class="button button-primary landing-btn" type="button">
+        <span class="landing-gh-icon">⌘</span>
+        <span>Continue with GitHub</span>
+      </button>
+
+      <div class="landing-footer-actions">
+        <button id="landingEmailBtn" class="landing-link-btn" type="button">Sign in with email</button>
+        <span class="landing-separator">·</span>
+        <button id="landingExploreBtn" class="landing-link-btn" type="button">Explore demo dashboard ↗</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-shell" id="appShell">
 
     <!-- =========================================
          SIDEBAR
