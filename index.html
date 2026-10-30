@@ -28,35 +28,118 @@
 </head>
 
 <body>
+  <!-- Scroll Progress Indicator (Phase 1) -->
+  <div class="scroll-progress-bar" id="scrollProgressBar" aria-hidden="true"></div>
+
   <!-- =========================================
-       MINIMAL LANDING / SIGN-IN VIEW (TASK 2)
+       MINIMAL LANDING / SIGN-IN VIEW (TASK 2 + PHASE 1)
   ========================================== -->
   <div class="landing-view" id="landingView">
-    <div class="landing-card">
-      <div class="landing-brand">
-        <span class="brand-symbol">D<span>.</span></span>
-        <span class="brand-name">deployflow<span>®</span></span>
-      </div>
+    <!-- Atmospheric Blurred Gradient Blobs Layer -->
+    <div class="landing-blobs-layer" id="landingBlobsLayer" aria-hidden="true">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="blob blob-3"></div>
+    </div>
 
-      <h1 class="landing-title">Ship with confidence.</h1>
+    <div class="landing-hero-container">
+      <div class="landing-card" id="landingHeroCard">
+        <div class="landing-brand">
+          <span class="brand-symbol">D<span>.</span></span>
+          <span class="brand-name">deployflow<span>®</span></span>
+        </div>
 
-      <p class="landing-desc">
-        Automated delivery platform: push code to GitHub and ship directly to AWS.
-      </p>
+        <h1 class="landing-title">Ship with confidence.</h1>
 
-      <div id="landingError" class="landing-error" style="display: none;"></div>
+        <p class="landing-desc">
+          Automated delivery platform: push code to GitHub and ship directly to AWS.
+        </p>
 
-      <button id="landingGithubBtn" class="button button-primary landing-btn" type="button">
-        <span class="landing-gh-icon">⌘</span>
-        <span>Continue with GitHub</span>
-      </button>
+        <div id="landingError" class="landing-error" style="display: none;"></div>
 
-      <div class="landing-footer-actions">
-        <button id="landingEmailBtn" class="landing-link-btn" type="button">Sign in with email</button>
-        <span class="landing-separator">·</span>
-        <button id="landingExploreBtn" class="landing-link-btn" type="button">Explore demo dashboard ↗</button>
+        <button id="landingGithubBtn" class="button button-primary landing-btn" type="button">
+          <span class="landing-gh-icon">⌘</span>
+          <span>Continue with GitHub</span>
+        </button>
+
+        <div class="landing-footer-actions">
+          <button id="landingEmailBtn" class="landing-link-btn" type="button">Sign in with email</button>
+          <span class="landing-separator">·</span>
+          <button id="landingExploreBtn" class="landing-link-btn" type="button">Explore demo dashboard ↗</button>
+        </div>
       </div>
     </div>
+
+    <!-- HOW IT WORKS SECTION (PHASE 1) -->
+    <section class="how-it-works-section" id="howItWorksSection" aria-label="How it works">
+      <div class="hiw-header">
+        <span class="eyebrow"><span class="eyebrow-mark"></span>THE PIPELINE</span>
+        <h2 class="hiw-title">How it works</h2>
+        <p class="hiw-desc">From your first git commit to global edge CDN in six automated stages.</p>
+      </div>
+
+      <div class="hiw-track-wrap">
+        <div class="hiw-line-track" aria-hidden="true">
+          <div class="hiw-line-fill" id="hiwLineFill"></div>
+        </div>
+
+        <div class="hiw-stages-grid" id="hiwStagesGrid">
+          <div class="hiw-card" data-step="1">
+            <div class="hiw-card-top">
+              <span class="hiw-step-num">01</span>
+              <span class="hiw-icon">⌘</span>
+            </div>
+            <h3 class="hiw-stage-title">Checkout</h3>
+            <p class="hiw-stage-desc">Fetches source commit cleanly from GitHub repository</p>
+          </div>
+
+          <div class="hiw-card" data-step="2">
+            <div class="hiw-card-top">
+              <span class="hiw-step-num">02</span>
+              <span class="hiw-icon">📦</span>
+            </div>
+            <h3 class="hiw-stage-title">Install</h3>
+            <p class="hiw-stage-desc">Resolves lockfile dependencies with hermetic caching</p>
+          </div>
+
+          <div class="hiw-card" data-step="3">
+            <div class="hiw-card-top">
+              <span class="hiw-step-num">03</span>
+              <span class="hiw-icon">✓</span>
+            </div>
+            <h3 class="hiw-stage-title">Test</h3>
+            <p class="hiw-stage-desc">Executes unit tests and automated regression checks</p>
+          </div>
+
+          <div class="hiw-card" data-step="4">
+            <div class="hiw-card-top">
+              <span class="hiw-step-num">04</span>
+              <span class="hiw-icon">⚡</span>
+            </div>
+            <h3 class="hiw-stage-title">Build</h3>
+            <p class="hiw-stage-desc">Optimizes and bundles frontend distribution assets</p>
+          </div>
+
+          <div class="hiw-card" data-step="5">
+            <div class="hiw-card-top">
+              <span class="hiw-step-num">05</span>
+              <span class="hiw-icon">⇧</span>
+            </div>
+            <h3 class="hiw-stage-title">Deploy</h3>
+            <p class="hiw-stage-desc">Uploads artifacts to AWS S3 storage with cache headers</p>
+          </div>
+
+          <div class="hiw-card" data-step="6">
+            <div class="hiw-card-top">
+              <span class="hiw-step-num">06</span>
+              <span class="hiw-icon">◎</span>
+            </div>
+            <h3 class="hiw-stage-title">Verify</h3>
+            <p class="hiw-stage-desc">Invalidates CloudFront edge CDN and probes live health</p>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 
   <div class="app-shell" id="appShell">

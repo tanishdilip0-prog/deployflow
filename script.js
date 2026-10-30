@@ -1718,4 +1718,100 @@ document.addEventListener("DOMContentLoaded", async () => {
   } catch (err) {
     console.error("Initialization error:", err.message);
   }
+
+  // =============================================================
+  // PHASE 1: STARTING PAGE & SCROLL ANIMATIONS (GLASS & HOW IT WORKS)
+  // =============================================================
+  document.documentElement.classList.add('fx');
+
+  (function initPhase1LandingFx() {
+    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // 1. Thin Scroll-Progress Bar (rAF + passive listener)
+    const progressBar = document.getElementById('scrollProgressBar');
+    if (progressBar && !prefersReducedMotion) {
+      let scrollRaf = null;
+      window.addEventListener('scroll', () => {
+        if (!scrollRaf) {
+          scrollRaf = requestAnimationFrame(() => {
+            const scrollTop = window.scrollY || document.documentElement.scrollTop;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = docHeight > 0 ? Math.min(1, Math.max(0, scrollTop / docHeight)) : 0;
+            progressBar.style.transform = `scaleX(${progress.toFixed(4)})`;
+            scrollRaf = null;
+          });
+        }
+      }, { passive: true });
+    }
+
+    // 2. 3D Card Mouse-Tilt on Hero Card (Desktop only, hover:hover & pointer:fine)
+    const isDesktopMouse = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    const heroCard = document.getElementById('landingHeroCard');
+    if (heroCard && isDesktopMouse && !prefersReducedMotion) {
+      let tiltRaf = null;
+      let targetRotX = 0, targetRotY = 0;
+
+      heroCard.addEventListener('mousemove', (e) => {
+        const rect = heroCard.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return;
+        const x = (e.clientX - rect.left) / rect.width - 0.5;
+        const y = (e.clientY - rect.top) / rect.height - 0.5;
+        targetRotX = -y * 6; // max 6deg rotateX
+        targetRotY = x * 6;  // max 6deg rotateY
+
+        if (!tiltRaf) {
+          tiltRaf = requestAnimationFrame(() => {
+            heroCard.style.transform = `perspective(1000px) rotateX(${targetRotX.toFixed(2)}deg) rotateY(${targetRotY.toFixed(2)}deg)`;
+            tiltRaf = null;
+          });
+        }
+      });
+
+      heroCard.addEventListener('mouseleave', () => {
+        if (tiltRaf) { cancelAnimationFrame(tiltRaf); tiltRaf = null; }
+        heroCard.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg)';
+      });
+    }
+
+    // 3. Small Parallax on Atmospheric Blobs (Desktop only, passive listener, rAF)
+    const blobsLayer = document.getElementById('landingBlobsLayer');
+    if (blobsLayer && isDesktopMouse && !prefersReducedMotion) {
+      let parallaxRaf = null;
+      window.addEventListener('scroll', () => {
+        if (!parallaxRaf) {
+          parallaxRaf = requestAnimationFrame(() => {
+            const y = window.scrollY || 0;
+            blobsLayer.style.transform = `translate3d(0, ${(y * 0.22).toFixed(1)}px, 0)`;
+            parallaxRaf = null;
+          });
+        }
+      }, { passive: true });
+    }
+
+    // 4. Scroll Reveal for "How It Works" Section & Pipeline Connecting Line
+    const hiwSection = document.getElementById('howItWorksSection');
+    const hiwLineTrack = document.querySelector('.hiw-line-track');
+    const stageCards = document.querySelectorAll('.hiw-card');
+
+    if ('IntersectionObserver' in window && !prefersReducedMotion) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            if (hiwLineTrack) hiwLineTrack.classList.add('in-view');
+            stageCards.forEach((card, idx) => {
+              setTimeout(() => {
+                card.classList.add('in-view');
+              }, idx * 60);
+            });
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.15 });
+
+      if (hiwSection) observer.observe(hiwSection);
+    } else {
+      if (hiwLineTrack) hiwLineTrack.classList.add('in-view');
+      stageCards.forEach((card) => card.classList.add('in-view'));
+    }
+  })();
 });
