@@ -1138,6 +1138,53 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (e) {}
   }
 
+  const celebratedDeployments = new Set();
+
+  function triggerDeploySuccessCelebration(stageArticle) {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+    const currentRun = activeDeploymentId || 'latest-run';
+    if (celebratedDeployments.has(currentRun)) return;
+    celebratedDeployments.add(currentRun);
+
+    const target = stageArticle || document.querySelector('.pipeline-stage[data-stage="verify"]');
+    if (!target) return;
+
+    const celebration = document.createElement('div');
+    celebration.className = 'deploy-celebration';
+    celebration.setAttribute('aria-hidden', 'true');
+
+    const glow = document.createElement('div');
+    glow.className = 'verify-glow';
+    celebration.appendChild(glow);
+
+    const colors = ['#2e8540', '#34a853', '#f2994a', '#4a90e2', '#27ae60', '#ffd700'];
+    const count = 14;
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('span');
+      p.className = 'confetti-burst-particle';
+      const angle = (i / count) * 2 * Math.PI;
+      const dist = 32 + Math.random() * 32;
+      const tx = Math.cos(angle) * dist;
+      const ty = Math.sin(angle) * dist - 12;
+      const rot = Math.floor(Math.random() * 360 - 180) + 'deg';
+      p.style.setProperty('--tx', `${tx.toFixed(1)}px`);
+      p.style.setProperty('--ty', `${ty.toFixed(1)}px`);
+      p.style.setProperty('--rot', rot);
+      p.style.backgroundColor = colors[i % colors.length];
+      celebration.appendChild(p);
+    }
+
+    target.style.position = 'relative';
+    target.appendChild(celebration);
+
+    setTimeout(() => {
+      celebration.remove();
+    }, 1200);
+  }
+  window.triggerDeploySuccessCelebration = triggerDeploySuccessCelebration;
+
   function applyStageState(stageKey, stageData) {
     const stateElem = document.getElementById(`state-${stageKey}`);
     const stageArticle = document.querySelector(`.pipeline-stage[data-stage="${stageKey}"]`);
@@ -1152,6 +1199,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else if (st === 'success' || st === 'skipped') {
       stageArticle.classList.add('is-success');
       stateElem.textContent = st === 'skipped' ? "SKIPPED" : "SUCCESS";
+      if (stageKey === 'verify' && st === 'success') {
+        triggerDeploySuccessCelebration(stageArticle);
+      }
     } else if (st === 'failed') {
       stageArticle.classList.add('is-failed');
       stateElem.textContent = "FAILED";
@@ -1380,6 +1430,24 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       }
     };
+
+    const landingCardElem = landingGhBtn.closest('.landing-card');
+    if (landingCardElem) {
+      landingGhBtn.addEventListener('mouseenter', () => {
+        landingCardElem.classList.add('card-hover-lift');
+      });
+      landingGhBtn.addEventListener('mouseleave', () => {
+        landingCardElem.classList.remove('card-hover-lift', 'card-press-down');
+      });
+      landingGhBtn.addEventListener('mousedown', () => {
+        landingCardElem.classList.remove('card-hover-lift');
+        landingCardElem.classList.add('card-press-down');
+      });
+      landingGhBtn.addEventListener('mouseup', () => {
+        landingCardElem.classList.remove('card-press-down');
+        landingCardElem.classList.add('card-hover-lift');
+      });
+    }
   }
 
   document.getElementById("landingEmailBtn")?.addEventListener("click", () => {
