@@ -38,6 +38,6 @@ export const config = {
   awsSessionToken: process.env.AWS_SESSION_TOKEN || '',
   defaultS3Bucket: process.env.AWS_S3_BUCKET || '',
   defaultCloudFrontDistributionId: process.env.AWS_CLOUDFRONT_DISTRIBUTION_ID || '',
-  ollamaHost: (process.env.OLLAMA_HOST || 'http://127.0.0.1:11434').trim().replace(/\/$/, ''),
-  ollamaModel: (process.env.OLLAMA_MODEL || 'llama3.2').trim(),
+  geminiApiKey: (process.env.GEMINI_API_KEY || '').trim(),
+  geminiModel: (process.env.GEMINI_MODEL || 'gemini-3.8-flash').trim(),
 };

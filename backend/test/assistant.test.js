@@ -24,7 +24,7 @@ All clear!
   assert.match(redacted, /All clear!/);
 });
 
-test('Assistant API: GET /api/assistant/status returns local Ollama status', async () => {
+test('Assistant API: GET /api/assistant/status returns Gemini provider status', async () => {
   const app = createApp();
   const server = app.listen(0);
   const port = server.address().port;
@@ -34,9 +34,9 @@ test('Assistant API: GET /api/assistant/status returns local Ollama status', asy
     assert.equal(res.status, 200);
     const body = await res.json();
     assert.equal(body.ok, true);
-    assert.equal(typeof body.online, 'boolean');
+    assert.equal(body.provider, 'Google Gemini');
     assert.equal(typeof body.configuredModel, 'string');
-    assert.ok(Array.isArray(body.availableModels));
+    assert.equal(typeof body.available, 'boolean');
     assert.ok(typeof body.setupInstructions === 'string');
   } finally {
     server.close();
@@ -65,7 +65,7 @@ test('Assistant API: POST /api/assistant/chat validates inputs and enforces safe
     });
     assert.equal(blankRes.status, 400);
 
-    // Oversized message
+    // Oversized message (>2000 chars)
     const hugeRes = await fetch(`http://127.0.0.1:${port}/api/assistant/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -73,24 +73,18 @@ test('Assistant API: POST /api/assistant/chat validates inputs and enforces safe
     });
     assert.equal(hugeRes.status, 400);
 
-    // When Ollama is offline, returns 503 with setup instructions (no cloud fallback)
+    // When GEMINI_API_KEY is not set or invalid, returns 503 with setup instructions
     const validRes = await fetch(`http://127.0.0.1:${port}/api/assistant/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: 'Explain my pipeline' })
+      body: JSON.stringify({ message: 'Explain my 6-stage pipeline' })
     });
-    // In test environment (Ollama offline OR model not pulled), must return 503 — never fall back to cloud AI
+    // In test environment without GEMINI_API_KEY, must return 503
     assert.equal(validRes.status, 503);
     const body = await validRes.json();
     assert.equal(body.ok, false);
-    // Either: Ollama daemon is offline ("No cloud AI providers are used")
-    //     OR: Ollama is running but the model is not installed ("Installed models:")
-    // Both cases correctly refuse cloud fallback.
-    assert.ok(
-      /No cloud AI providers are used/.test(body.details) || /Installed models:/.test(body.details),
-      `Expected a no-cloud-AI explanation in details, got: ${body.details}`
-    );
-    assert.ok(body.setupInstructions, 'Expected setupInstructions to be present');
+    assert.match(body.details, /GEMINI_API_KEY/);
+    assert.ok(body.setupInstructions.includes('GEMINI_API_KEY'));
   } finally {
     server.close();
   }

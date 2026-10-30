@@ -17,6 +17,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   // -------------------------------------------------------------
   // Helpers & Formatting
   // -------------------------------------------------------------
+  function getOAuthRedirectUrl() {
+    if (window.location.protocol === "file:") {
+      return "http://localhost:3001/";
+    }
+    // Return clean base URL with pathname (e.g. https://domain.cloudfront.net/ or /index.html)
+    // Strip hash fragments and query params so OAuth callback lands cleanly on the app
+    const url = new URL(window.location.href);
+    url.hash = "";
+    url.search = "";
+    return url.toString();
+  }
   function formatDuration(ms) {
     if (!ms || ms <= 0) return "—";
     const totalSec = Math.floor(ms / 1000);
@@ -113,7 +124,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       modal.style.cssText = `
         background: #fffdf8; border: 1.5px solid #101f3a;
         box-shadow: 8px 8px 0 #101f3a; border-radius: 8px;
-        width: min(440px, 100%); padding: 24px; position: relative;
+        width: min(440px, 100%); max-height: calc(100vh - 40px); overflow-y: auto;
+        padding: 24px; position: relative;
         font-family: inherit; color: #101f3a;
       `;
       const closeBtn = document.createElement("button");
@@ -222,28 +234,34 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     ghBtn.onclick = () => {
       if (!sb) return alert("Supabase auth initializing...");
-      let targetUrl = window.location.href;
-      if (window.location.protocol === "file:") {
-        targetUrl = "http://localhost:3001/";
-      }
+      ghBtn.disabled = true;
+      ghBtn.innerHTML = `<span>⏳</span> Connecting to GitHub...`;
       sb.auth.signInWithOAuth({
         provider: "github",
         options: {
-          redirectTo: targetUrl,
+          redirectTo: getOAuthRedirectUrl(),
           scopes: "repo read:user"
         }
+      }).catch(err => {
+        ghBtn.disabled = false;
+        ghBtn.innerHTML = `<span>⌘</span> Continue with GitHub`;
+        errBox.textContent = err?.message || "GitHub sign-in failed.";
+        errBox.style.display = "block";
       });
     };
 
     ggBtn.onclick = () => {
       if (!sb) return alert("Supabase auth initializing...");
-      let targetUrl = window.location.href;
-      if (window.location.protocol === "file:") {
-        targetUrl = "http://localhost:3001/";
-      }
+      ggBtn.disabled = true;
+      ggBtn.innerHTML = `<span>⏳</span> Connecting to Google...`;
       sb.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: targetUrl }
+        options: { redirectTo: getOAuthRedirectUrl() }
+      }).catch(err => {
+        ggBtn.disabled = false;
+        ggBtn.innerHTML = `<span>G</span> Continue with Google`;
+        errBox.textContent = err?.message || "Google sign-in failed.";
+        errBox.style.display = "block";
       });
     };
   }
@@ -297,16 +315,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         `;
         contentBox.querySelector("#connectGhAuthBtn").onclick = () => {
           if (!sb) return alert("Supabase auth initializing...");
-          let targetUrl = window.location.href;
-          if (window.location.protocol === "file:") {
-            targetUrl = "http://localhost:3001/";
-          }
+          const btn = contentBox.querySelector("#connectGhAuthBtn");
+          btn.disabled = true;
+          btn.innerHTML = `<span>⏳</span> Connecting to GitHub...`;
           sb.auth.signInWithOAuth({
             provider: "github",
             options: {
-              redirectTo: targetUrl,
+              redirectTo: getOAuthRedirectUrl(),
               scopes: "repo read:user"
             }
+          }).catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = `<span>⌘</span> Authorize & Connect GitHub`;
+            showMsg(err?.message || "GitHub authorization failed.", true);
           });
         };
         return;
@@ -331,13 +352,16 @@ document.addEventListener("DOMContentLoaded", async () => {
             </button>
           `;
           contentBox.querySelector("#reauthGhBtn").onclick = () => {
-            let targetUrl = window.location.href;
-            if (window.location.protocol === "file:") {
-              targetUrl = "http://localhost:3001/";
-            }
+            const btn = contentBox.querySelector("#reauthGhBtn");
+            btn.disabled = true;
+            btn.textContent = "Connecting to GitHub...";
             sb.auth.signInWithOAuth({
               provider: "github",
-              options: { redirectTo: targetUrl, scopes: "repo read:user" }
+              options: { redirectTo: getOAuthRedirectUrl(), scopes: "repo read:user" }
+            }).catch(err => {
+              btn.disabled = false;
+              btn.textContent = "Re-authenticate with GitHub";
+              showMsg(err?.message || "Re-authentication failed.", true);
             });
           };
           return;
