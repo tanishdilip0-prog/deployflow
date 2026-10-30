@@ -4122,7 +4122,348 @@ html.fx .hiw-card.in-view {
   }
 }
 
-/* Reduced motion overrides (Task 5 & Phase 1) */
+/* =========================================================
+   PHASE 2: CLICK, TAP & INTERFACE TRANSITIONS
+   ========================================================= */
+
+/* Tap highlight reset */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Button ripple container */
+.button,
+.btn,
+.landing-btn,
+.landing-link-btn,
+.text-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-ripple {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 75%);
+  transform: scale(0);
+  animation: btnRippleAnim 500ms ease-out forwards;
+  will-change: transform, opacity;
+}
+
+.button-secondary .btn-ripple,
+.btn-secondary .btn-ripple,
+.landing-link-btn .btn-ripple,
+.text-button .btn-ripple {
+  background: radial-gradient(circle, rgba(16, 31, 58, 0.22) 0%, rgba(16, 31, 58, 0) 75%);
+}
+
+@keyframes btnRippleAnim {
+  0% {
+    opacity: 1;
+    transform: scale(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.5);
+  }
+}
+
+/* Touch devices: Spring squish feedback (scale 0.96 with springy overshoot) */
+@media (hover: none) and (pointer: coarse) {
+  .button:active,
+  .btn:active,
+  .landing-btn:active,
+  .nav-link:active,
+  .text-button:active,
+  .hiw-card:active,
+  .metric-card:active {
+    transform: scale(0.96) !important;
+    transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  }
+}
+
+/* Gliding Nav Tab Underline / Indicator */
+.main-nav {
+  position: relative;
+}
+
+.nav-gliding-indicator {
+  position: absolute;
+  left: -20px;
+  width: 3px;
+  height: 43px;
+  background: var(--orange-500);
+  border-radius: 0 3px 3px 0;
+  pointer-events: none;
+  z-index: 5;
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), height 200ms cubic-bezier(0.16, 1, 0.3, 1), opacity 150ms ease;
+  transform: translateY(0);
+  opacity: 0;
+}
+
+/* Interface view transitions (200ms fade + 12px slide) */
+@keyframes viewSlideFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.landing-view:not(.hidden),
+.app-shell:not(.hidden) {
+  animation: viewSlideFadeIn 200ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.page-section {
+  transition: opacity 200ms cubic-bezier(0.16, 1, 0.3, 1), transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Smooth Status Badge Color Morphing */
+.status-pill,
+.status-indicator,
+.stage-state,
+.pipeline-status,
+.environment-badge,
+.connect-state-badge {
+  transition:
+    background-color 250ms ease,
+    border-color 250ms ease,
+    color 250ms ease;
+}
+
+.status-pill::before {
+  transition: background-color 250ms ease;
+}
+
+/* =========================================================
+   PHASE 3: REDIRECT & CONNECT GITHUB (HANDOFF & STEPPER)
+   ========================================================= */
+
+/* Fullscreen Glass Handoff Overlay */
+.handoff-overlay,
+.signing-in-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16, 31, 58, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: overlayFadeIn 250ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes overlayFadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.handoff-card {
+  background: var(--paper);
+  border: 1.5px solid var(--navy-950);
+  border-radius: 14px;
+  padding: 32px 36px;
+  text-align: center;
+  box-shadow: 8px 8px 0 var(--navy-950);
+  max-width: 380px;
+  width: 90%;
+  box-sizing: border-box;
+  animation: cardPopIn 250ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes cardPopIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.handoff-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.handoff-node {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1.5px solid var(--navy-950);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  background: var(--beige-150);
+  color: var(--navy-950);
+  font-size: 16px;
+}
+
+.handoff-node.gh-node {
+  background: var(--navy-950);
+  color: var(--beige-100);
+}
+
+.handoff-track {
+  position: relative;
+  width: 90px;
+  height: 4px;
+  background: var(--beige-300);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.handoff-dot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 24px;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--orange-500), var(--green-500));
+  animation: handoffDotSlide 1.2s ease-in-out infinite;
+}
+
+@keyframes handoffDotSlide {
+  0% { transform: translateX(-24px); }
+  50% { transform: translateX(33px); }
+  100% { transform: translateX(90px); }
+}
+
+.handoff-text {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--navy-950);
+  margin: 0 0 6px 0;
+}
+
+.handoff-sub {
+  font-size: 12px;
+  color: var(--navy-600);
+  line-height: 1.45;
+}
+
+/* Pulsing / Spinning Ring for Return Session Restore */
+.signing-in-ring {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 3.5px solid var(--beige-300);
+  border-top-color: var(--orange-500);
+  margin: 0 auto;
+  animation: ringSpin 900ms linear infinite;
+}
+
+@keyframes ringSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 3-Step Connect Indicator Enhancements */
+.connect-step-line {
+  flex: 1;
+  height: 2px;
+  background: var(--border-strong);
+  margin: 0 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.connect-step-line::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--green-500);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.connect-step-line.filled::after {
+  transform: scaleX(1);
+}
+
+/* Step pane sliding */
+.connect-step-pane {
+  animation: stepSlideIn 250ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes stepSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Skeleton shimmer for repo loading */
+.skeleton-shimmer {
+  background: linear-gradient(90deg, var(--beige-200) 25%, var(--beige-100) 50%, var(--beige-200) 75%);
+  background-size: 200% 100%;
+  animation: shimmerAnim 1.4s infinite;
+  border-radius: 6px;
+}
+
+@keyframes shimmerAnim {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Branch select brief highlight */
+@keyframes branchHighlightFlash {
+  0% {
+    background-color: var(--orange-100);
+    border-color: var(--orange-500);
+  }
+  100% {
+    background-color: #ffffff;
+    border-color: var(--navy-950);
+  }
+}
+
+.branch-highlight-flash {
+  animation: branchHighlightFlash 600ms ease-out forwards;
+}
+
+/* GitHub Icon Ring Pulse Once */
+@keyframes ghRingPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(46, 133, 64, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(46, 133, 64, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(46, 133, 64, 0);
+  }
+}
+
+.gh-ring-pulse-once {
+  display: inline-block;
+  border-radius: 50%;
+  animation: ghRingPulse 600ms ease-out 1;
+}
+
+/* Shake failed state */
+.modal-error-shake {
+  animation: stage-shake 300ms ease-in-out 1;
+}
+
+/* Reduced motion overrides (Task 5, Phase 1, Phase 2 & Phase 3) */
 @media (prefers-reduced-motion: reduce) {
   html.fx .landing-card,
   .landing-brand,
@@ -4130,11 +4471,38 @@ html.fx .hiw-card.in-view {
   .landing-desc,
   .landing-btn,
   .landing-footer-actions,
-  html.fx .hiw-card {
+  html.fx .hiw-card,
+  .landing-view,
+  .app-shell,
+  .page-section,
+  .handoff-overlay,
+  .signing-in-overlay,
+  .handoff-card,
+  .connect-step-pane,
+  .skeleton-shimmer,
+  .branch-highlight-flash,
+  .gh-ring-pulse-once {
     animation: none !important;
     transition: none !important;
     opacity: 1 !important;
     transform: none !important;
+  }
+
+  .connect-step-line::after {
+    transition: none !important;
+  }
+
+  .connect-step-line.filled::after {
+    transform: scaleX(1) !important;
+  }
+
+  .btn-ripple {
+    display: none !important;
+    animation: none !important;
+  }
+
+  .nav-gliding-indicator {
+    transition: none !important;
   }
 
   .blob {

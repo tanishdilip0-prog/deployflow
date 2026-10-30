@@ -274,18 +274,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     const container = document.createElement("div");
 
     function renderStepsHeader(currentStep, ghConnected) {
+      const step1Done = Boolean(ghConnected);
+      const step2Done = currentStep > 2;
       return `
         <div class="connect-steps">
-          <div class="connect-step-item ${ghConnected ? 'completed' : 'active'}">
-            <span class="connect-step-num">${ghConnected ? '✓' : '1'}</span>
+          <div class="connect-step-item ${step1Done ? 'completed' : 'active'}">
+            <span class="connect-step-num">${step1Done ? '✓' : '1'}</span>
             <span>Connect GitHub</span>
           </div>
-          <span class="connect-step-arrow">→</span>
-          <div class="connect-step-item ${currentStep === 2 ? 'active' : (currentStep > 2 ? 'completed' : '')}">
-            <span class="connect-step-num">2</span>
+          <div class="connect-step-line ${step1Done ? 'filled' : ''}"></div>
+          <div class="connect-step-item ${currentStep === 2 ? 'active' : (step2Done ? 'completed' : '')}">
+            <span class="connect-step-num">${step2Done ? '✓' : '2'}</span>
             <span>Pick Repository</span>
           </div>
-          <span class="connect-step-arrow">→</span>
+          <div class="connect-step-line ${step2Done ? 'filled' : ''}"></div>
           <div class="connect-step-item ${currentStep === 3 ? 'active' : ''}">
             <span class="connect-step-num">3</span>
             <span>Branch & Continue</span>
@@ -317,6 +319,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       msgBox.style.background = isError ? "rgba(179,18,46,0.1)" : "rgba(40,167,69,0.1)";
       msgBox.style.color = isError ? "#b3122e" : "#1e7e34";
       msgBox.style.border = isError ? "1px solid rgba(179,18,46,0.2)" : "1px solid rgba(40,167,69,0.2)";
+      if (isError) {
+        msgBox.classList.remove('modal-error-shake');
+        void msgBox.offsetWidth;
+        msgBox.classList.add('modal-error-shake');
+      }
     }
 
     function triggerOAuth(btnElem) {
@@ -376,11 +383,17 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Step 2 & 3: User is connected with GitHub, fetch repositories
       stepsHeaderBox.innerHTML = renderStepsHeader(2, true);
       contentBox.innerHTML = `
-        <div class="connect-state-badge connect-state-connected">
-          <span>✓</span> GitHub connected
-        </div>
-        <div style="padding:24px; text-align:center; color:#53647b; font-size:13px;">
-          <span>⏳ Loading your repositories from GitHub...</span>
+        <div class="connect-step-pane">
+          <div class="connect-state-badge connect-state-connected">
+            <span class="gh-ring-pulse-once">✓</span> GitHub connected
+          </div>
+          <div style="padding:14px 0;">
+            <div class="skeleton-shimmer" style="height:14px; width:55%; margin-bottom:12px;"></div>
+            <div class="skeleton-shimmer" style="height:40px; width:100%; margin-bottom:14px;"></div>
+            <div class="skeleton-shimmer" style="height:14px; width:40%; margin-bottom:12px;"></div>
+            <div class="skeleton-shimmer" style="height:40px; width:100%; margin-bottom:18px;"></div>
+            <div class="skeleton-shimmer" style="height:40px; width:100%;"></div>
+          </div>
         </div>
       `;
 
@@ -397,15 +410,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (!data.ok) {
           stepsHeaderBox.innerHTML = renderStepsHeader(1, false);
           contentBox.innerHTML = `
-            <div class="connect-state-badge connect-state-error">
-              <span>✕</span> GitHub session expired or invalid
+            <div class="connect-step-pane">
+              <div class="connect-state-badge connect-state-error modal-error-shake">
+                <span>✕</span> GitHub session expired or invalid
+              </div>
+              <p style="font-size:12px; color:#53647b; margin:0 0 14px 0;">
+                ${data.error || "GitHub access token has expired or was revoked. Re-authenticate to reload your repositories."}
+              </p>
+              <button id="reauthBtn" class="button button-primary" style="width:100%; padding:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+                <span>⌘</span> Re-authenticate with GitHub
+              </button>
             </div>
-            <p style="font-size:12px; color:#53647b; margin:0 0 14px 0;">
-              ${data.error || "GitHub access token has expired or was revoked. Re-authenticate to reload your repositories."}
-            </p>
-            <button id="reauthBtn" class="button button-primary" style="width:100%; padding:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
-              <span>⌘</span> Re-authenticate with GitHub
-            </button>
           `;
           contentBox.querySelector("#reauthBtn").onclick = function () {
             triggerOAuth(this);
@@ -418,17 +433,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (!repos.length) {
           stepsHeaderBox.innerHTML = renderStepsHeader(2, true);
           contentBox.innerHTML = `
-            <div class="connect-state-badge connect-state-connected">
-              <span>✓</span> GitHub connected
-            </div>
-            <div class="connect-state-empty">
-              <p style="font-size:13px; font-weight:600; color:#101f3a; margin:0 0 6px 0;">No repositories found</p>
-              <p style="font-size:12px; color:#53647b; margin:0 0 14px 0;">
-                No repositories were found in your GitHub account or permissions are limited.
-              </p>
-              <button id="refreshReposBtn" class="button button-secondary" style="padding:8px 16px; font-size:12px; cursor:pointer;">
-                ↻ Refresh from GitHub
-              </button>
+            <div class="connect-step-pane">
+              <div class="connect-state-badge connect-state-connected">
+                <span class="gh-ring-pulse-once">✓</span> GitHub connected
+              </div>
+              <div class="connect-state-empty">
+                <p style="font-size:13px; font-weight:600; color:#101f3a; margin:0 0 6px 0;">No repositories found</p>
+                <p style="font-size:12px; color:#53647b; margin:0 0 14px 0;">
+                  No repositories were found in your GitHub account or permissions are limited.
+                </p>
+                <button id="refreshReposBtn" class="button button-secondary" style="padding:8px 16px; font-size:12px; cursor:pointer;">
+                  ↻ Refresh from GitHub
+                </button>
+              </div>
             </div>
           `;
           contentBox.querySelector("#refreshReposBtn").onclick = () => loadGitHubFlow();
@@ -438,26 +455,28 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Connected state with repositories: Steps 2 and 3
         stepsHeaderBox.innerHTML = renderStepsHeader(2, true);
         contentBox.innerHTML = `
-          <div class="connect-state-badge connect-state-connected">
-            <span>✓</span> GitHub connected (${repos.length} repositories available)
+          <div class="connect-step-pane">
+            <div class="connect-state-badge connect-state-connected">
+              <span class="gh-ring-pulse-once">✓</span> GitHub connected (${repos.length} repositories available)
+            </div>
+
+            <label style="display:block; font-size:11px; font-weight:700; margin-bottom:4px; color:#53647b;">
+              STEP 2: SELECT REPOSITORY
+            </label>
+            <select id="ghRepoSelect" style="width:100%; padding:10px; border:1px solid #101f3a; border-radius:4px; margin-bottom:14px; font:inherit; background:#fff; box-sizing:border-box;">
+              <option value="" disabled selected>-- Select a repository --</option>
+              ${repos.map((r, i) => `<option value="${i}">${r.full_name}${r.private ? " (private)" : ""}</option>`).join('')}
+            </select>
+
+            <label style="display:block; font-size:11px; font-weight:700; margin-bottom:4px; color:#53647b;">
+              STEP 3: DEPLOY BRANCH
+            </label>
+            <input type="text" id="ghBranchInput" value="main" placeholder="e.g. main" style="width:100%; padding:10px; border:1px solid #101f3a; border-radius:4px; margin-bottom:18px; font:inherit; box-sizing:border-box;">
+
+            <button id="ghConnectSubmitBtn" class="button button-primary" style="width:100%; padding:11px; font-weight:600; cursor:pointer;" disabled>
+              Connect Repository & Continue →
+            </button>
           </div>
-
-          <label style="display:block; font-size:11px; font-weight:700; margin-bottom:4px; color:#53647b;">
-            STEP 2: SELECT REPOSITORY
-          </label>
-          <select id="ghRepoSelect" style="width:100%; padding:10px; border:1px solid #101f3a; border-radius:4px; margin-bottom:14px; font:inherit; background:#fff; box-sizing:border-box;">
-            <option value="" disabled selected>-- Select a repository --</option>
-            ${repos.map((r, i) => `<option value="${i}">${r.full_name}${r.private ? " (private)" : ""}</option>`).join('')}
-          </select>
-
-          <label style="display:block; font-size:11px; font-weight:700; margin-bottom:4px; color:#53647b;">
-            STEP 3: DEPLOY BRANCH
-          </label>
-          <input type="text" id="ghBranchInput" value="main" placeholder="e.g. main" style="width:100%; padding:10px; border:1px solid #101f3a; border-radius:4px; margin-bottom:18px; font:inherit; box-sizing:border-box;">
-
-          <button id="ghConnectSubmitBtn" class="button button-primary" style="width:100%; padding:11px; font-weight:600; cursor:pointer;" disabled>
-            Connect Repository & Continue →
-          </button>
         `;
 
         const sel = contentBox.querySelector("#ghRepoSelect");
@@ -472,6 +491,9 @@ document.addEventListener("DOMContentLoaded", async () => {
           const chosen = repos[parseInt(sel.value, 10)];
           if (chosen) {
             branchIn.value = chosen.default_branch || "main";
+            branchIn.classList.remove('branch-highlight-flash');
+            void branchIn.offsetWidth;
+            branchIn.classList.add('branch-highlight-flash');
             submitBtn.disabled = false;
             stepsHeaderBox.innerHTML = renderStepsHeader(3, true);
           }
@@ -1813,5 +1835,204 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (hiwLineTrack) hiwLineTrack.classList.add('in-view');
       stageCards.forEach((card) => card.classList.add('in-view'));
     }
+  })();
+
+  // =============================================================
+  // PHASE 2: CLICK, TAP & INTERFACE TRANSITIONS
+  // =============================================================
+  (function initPhase2ClickAndTransitions() {
+    const isDesktopMouse = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // 1. Mouse Ripple from Click Point (Desktop only, clipped to button)
+    if (isDesktopMouse && !prefersReducedMotion) {
+      document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.button, .btn, .landing-btn, .landing-link-btn, .text-button');
+        if (!btn) return;
+
+        const rect = btn.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return;
+
+        const d = Math.max(rect.width, rect.height) * 2;
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        const ripple = document.createElement('span');
+        ripple.className = 'btn-ripple';
+        ripple.style.width = `${d}px`;
+        ripple.style.height = `${d}px`;
+        ripple.style.left = `${x - d / 2}px`;
+        ripple.style.top = `${y - d / 2}px`;
+        ripple.setAttribute('aria-hidden', 'true');
+
+        btn.appendChild(ripple);
+        setTimeout(() => {
+          ripple.remove();
+        }, 550);
+      });
+    }
+
+    // 2. Gliding Nav Tab Underline / Indicator
+    const nav = document.querySelector('.main-nav');
+    const indicator = document.getElementById('navGlidingIndicator');
+
+    function updateNavIndicator(targetLink) {
+      if (!nav || !indicator || prefersReducedMotion) return;
+      const activeLink = targetLink || nav.querySelector('.nav-link.active') || nav.querySelector('.nav-link');
+      if (!activeLink) return;
+
+      const navRect = nav.getBoundingClientRect();
+      const linkRect = activeLink.getBoundingClientRect();
+      const topOffset = linkRect.top - navRect.top;
+
+      indicator.style.transform = `translateY(${topOffset}px)`;
+      indicator.style.height = `${linkRect.height}px`;
+      indicator.style.opacity = '1';
+    }
+
+    if (nav && indicator) {
+      nav.addEventListener('click', (e) => {
+        const link = e.target.closest('.nav-link');
+        if (link) {
+          nav.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+          link.classList.add('active');
+          updateNavIndicator(link);
+        }
+      });
+
+      // Initialize on load and resize
+      setTimeout(() => updateNavIndicator(), 150);
+      window.addEventListener('resize', () => updateNavIndicator(), { passive: true });
+    }
+  })();
+
+  // =============================================================
+  // PHASE 3: REDIRECT ("HANDOFF") & SIGNING-IN OVERLAYS
+  // =============================================================
+  (function initPhase3Overlays() {
+    const prefersReducedMotion = window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // ── Handoff overlay (shown while browser redirects to GitHub) ──
+    let _handoffOverlay = null;
+    let _handoffTimer = null;
+
+    function showOAuthHandoffOverlay() {
+      if (prefersReducedMotion || _handoffOverlay) return;
+
+      const overlay = document.createElement('div');
+      overlay.className = 'handoff-overlay';
+      overlay.setAttribute('role', 'status');
+      overlay.setAttribute('aria-live', 'polite');
+      overlay.setAttribute('aria-label', 'Redirecting to GitHub');
+      overlay.innerHTML = `
+        <div class="handoff-card">
+          <div class="handoff-visual">
+            <div class="handoff-node">D</div>
+            <div class="handoff-track">
+              <div class="handoff-dot" aria-hidden="true"></div>
+            </div>
+            <div class="handoff-node gh-node" aria-hidden="true">⌘</div>
+          </div>
+          <p class="handoff-text">Redirecting to GitHub…</p>
+          <p class="handoff-sub">You'll be returned here automatically after signing in.</p>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      _handoffOverlay = overlay;
+
+      // Safety cleanup — remove after 8 s in case redirect never fires
+      _handoffTimer = setTimeout(() => removeOAuthHandoffOverlay(), 8000);
+    }
+
+    function removeOAuthHandoffOverlay() {
+      if (_handoffTimer) { clearTimeout(_handoffTimer); _handoffTimer = null; }
+      if (_handoffOverlay) {
+        _handoffOverlay.remove();
+        _handoffOverlay = null;
+      }
+    }
+
+    // ── Signing-in overlay (shown on return with access_token) ──
+    let _signingOverlay = null;
+    let _signingTimer = null;
+
+    function showSigningInOverlay() {
+      if (prefersReducedMotion || _signingOverlay) return;
+
+      const overlay = document.createElement('div');
+      overlay.className = 'signing-in-overlay';
+      overlay.setAttribute('role', 'status');
+      overlay.setAttribute('aria-live', 'polite');
+      overlay.setAttribute('aria-label', 'Signing you in');
+      overlay.innerHTML = `
+        <div class="handoff-card">
+          <div class="signing-in-ring" aria-hidden="true"></div>
+          <p class="handoff-text" style="margin-top:20px;">Signing you in…</p>
+          <p class="handoff-sub">Setting up your session.</p>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      _signingOverlay = overlay;
+
+      // Safety cleanup after 8 s
+      _signingTimer = setTimeout(() => removeSigningInOverlay(), 8000);
+    }
+
+    function removeSigningInOverlay() {
+      if (_signingTimer) { clearTimeout(_signingTimer); _signingTimer = null; }
+      if (_signingOverlay) {
+        _signingOverlay.remove();
+        _signingOverlay = null;
+      }
+    }
+
+    // ── Wire up: landing button ──
+    const landingGhBtn = document.getElementById('landingGithubBtn');
+    if (landingGhBtn) {
+      const origOnclick = landingGhBtn.onclick;
+      landingGhBtn.onclick = function (e) {
+        // Show overlay only after getOAuthRedirectUrl() succeeds (it's called inside onclick)
+        // We wrap: show after a microtask so the existing guard can throw first
+        const origOnclickResult = origOnclick && origOnclick.call(this, e);
+        // If onclick didn't throw, overlay is safe to show
+        // (guard throws synchronously; signInWithOAuth is async)
+        showOAuthHandoffOverlay();
+        return origOnclickResult;
+      };
+
+      // On error (button re-enabled) → remove overlay
+      const btnObserver = new MutationObserver(() => {
+        if (!landingGhBtn.disabled) removeOAuthHandoffOverlay();
+      });
+      btnObserver.observe(landingGhBtn, { attributes: true, attributeFilter: ['disabled'] });
+    }
+
+    // ── Wire up: Connect GitHub modal button ──
+    // triggerOAuth already uses getOAuthRedirectUrl(); patch the modal's oauth btn
+    document.addEventListener('click', (e) => {
+      const ghModalBtn = e.target.closest('#ghOAuthBtn');
+      if (!ghModalBtn) return;
+      // Only show if the button isn't double-click-protected (isOAuthing guard)
+      setTimeout(() => {
+        if (ghModalBtn.disabled) showOAuthHandoffOverlay();
+      }, 0);
+    });
+
+    // ── Wire up: show signing-in overlay on return with token ──
+    if (window.location.hash && window.location.hash.includes('access_token')) {
+      showSigningInOverlay();
+    }
+
+    // ── Wire up: remove signing-in overlay once user is authenticated ──
+    // Patch updateUserUI to call removeSigningInOverlay when user arrives
+    const _origUpdateUserUI = updateUserUI;
+    updateUserUI = function () {
+      _origUpdateUserUI.apply(this, arguments);
+      if (currentUser) {
+        removeSigningInOverlay();
+        removeOAuthHandoffOverlay();
+      }
+    };
   })();
 });
