@@ -5,7 +5,8 @@ test('OAuth Redirect & State Isolation: getOAuthRedirectUrl semantics', () => {
   const OAUTH_ALLOWED_ORIGINS = [
     "http://localhost:3001",
     "http://127.0.0.1:3001",
-    "https://d1chawsz7an8u9.cloudfront.net"
+    "https://d1chawsz7an8u9.cloudfront.net",
+    "https://tanishdilip0-prog.github.io"
   ];
 
   function getOAuthRedirectUrlMock(currentOrigin, protocol) {
@@ -18,6 +19,9 @@ test('OAuth Redirect & State Isolation: getOAuthRedirectUrl semantics', () => {
         `Allowed origins: ${OAUTH_ALLOWED_ORIGINS.join(", ")}`
       );
     }
+    if (currentOrigin === "https://tanishdilip0-prog.github.io") {
+      return "https://tanishdilip0-prog.github.io/deployflow/";
+    }
     return currentOrigin + "/";
   }
 
@@ -25,6 +29,12 @@ test('OAuth Redirect & State Isolation: getOAuthRedirectUrl semantics', () => {
   assert.equal(
     getOAuthRedirectUrlMock('https://d1chawsz7an8u9.cloudfront.net', 'https:'),
     'https://d1chawsz7an8u9.cloudfront.net/'
+  );
+
+  // GitHub Pages live deployment
+  assert.equal(
+    getOAuthRedirectUrlMock('https://tanishdilip0-prog.github.io', 'https:'),
+    'https://tanishdilip0-prog.github.io/deployflow/'
   );
 
   // Local development port 3001
@@ -49,6 +59,12 @@ test('OAuth Redirect & State Isolation: getOAuthRedirectUrl semantics', () => {
   assert.throws(
     () => getOAuthRedirectUrlMock('http://localhost:3000', 'http:'),
     /OAuth redirect blocked: "http:\/\/localhost:3000" is not in the DeployFlow allowlist/
+  );
+
+  // Must reject untrusted domains
+  assert.throws(
+    () => getOAuthRedirectUrlMock('https://malicious-site.com', 'https:'),
+    /OAuth redirect blocked: "https:\/\/malicious-site.com" is not in the DeployFlow allowlist/
   );
 });
 

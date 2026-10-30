@@ -245,7 +245,8 @@
   var OAUTH_ALLOWED_ORIGINS = [
     'http://localhost:3001',
     'http://127.0.0.1:3001',
-    'https://d1chawsz7an8u9.cloudfront.net'
+    'https://d1chawsz7an8u9.cloudfront.net',
+    'https://tanishdilip0-prog.github.io'
   ];
 
   function getOAuthRedirectUrl() {
@@ -258,6 +259,9 @@
         'OAuth redirect blocked: "' + origin + '" is not in the DeployFlow allowlist. ' +
         'Allowed origins: ' + OAUTH_ALLOWED_ORIGINS.join(', ')
       );
+    }
+    if (origin === 'https://tanishdilip0-prog.github.io') {
+      return 'https://tanishdilip0-prog.github.io/deployflow/';
     }
     return origin + '/';
   }
