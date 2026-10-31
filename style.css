@@ -4214,9 +4214,8 @@ html.fx .hiw-card.in-view {
   }
 }
 
-.landing-view:not(.hidden),
-.app-shell:not(.hidden) {
-  animation: viewSlideFadeIn 200ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+.view-slide-in {
+  animation: viewSlideFadeIn 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .page-section {
@@ -4474,6 +4473,7 @@ html.fx .hiw-card.in-view {
   html.fx .hiw-card,
   .landing-view,
   .app-shell,
+  .view-slide-in,
   .page-section,
   .handoff-overlay,
   .signing-in-overlay,

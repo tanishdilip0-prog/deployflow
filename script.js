@@ -821,6 +821,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   // -------------------------------------------------------------
   // Data Fetching & UI Updates
   // -------------------------------------------------------------
+  function _animateViewIn(el) {
+    if (!el || !document.documentElement.classList.contains('fx')) return;
+    el.classList.add('view-slide-in');
+    el.addEventListener('animationend', () => el.classList.remove('view-slide-in'), { once: true });
+  }
+
   function updateUserUI() {
     const landingView = document.getElementById("landingView");
     const appShell = document.getElementById("appShell");
@@ -832,7 +838,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (currentUser) {
       if (landingView) landingView.classList.add("hidden");
-      if (appShell) appShell.classList.remove("hidden");
+      if (appShell) {
+        const wasHidden = appShell.classList.contains("hidden");
+        appShell.classList.remove("hidden");
+        if (wasHidden) _animateViewIn(appShell);
+      }
 
       const email = currentUser.email || "developer@deployflow.dev";
       const initial = email.charAt(0).toUpperCase();
@@ -847,10 +857,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else {
       if (isDemoMode) {
         if (landingView) landingView.classList.add("hidden");
-        if (appShell) appShell.classList.remove("hidden");
+        if (appShell) {
+          const wasHidden = appShell.classList.contains("hidden");
+          appShell.classList.remove("hidden");
+          if (wasHidden) _animateViewIn(appShell);
+        }
       } else {
-        if (landingView) landingView.classList.remove("hidden");
         if (appShell) appShell.classList.add("hidden");
+        if (landingView) {
+          const wasHidden = landingView.classList.contains("hidden");
+          landingView.classList.remove("hidden");
+          if (wasHidden) _animateViewIn(landingView);
+        }
       }
 
       if (avatar) avatar.textContent = "DF";
